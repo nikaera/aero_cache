@@ -18,12 +18,20 @@ class AeroCache {
   /// [httpClient] - Optional HTTP client to use for requests
   /// [disableCompression] - Whether to disable zstd compression
   /// [cacheDirPath] - Optional custom cache directory path
+  /// [compressionLevel] - Compression level for zstd (1-22)
+  /// [defaultCacheDuration] - Default duration for cached items
+  ///   (default is 5 days)
+  /// Throws [AeroCacheException] if initialization fails.
   AeroCache({
     HttpClient? httpClient,
     bool disableCompression = false,
+    int compressionLevel = 3,
+    Duration defaultCacheDuration = const Duration(days: 5),
     String? cacheDirPath,
   }) : _cacheManager = CacheManager(
          disableCompression: disableCompression,
+         compressionLevel: compressionLevel,
+         defaultCacheDuration: defaultCacheDuration,
          cacheDirPath: cacheDirPath,
        ),
        _httpClient = httpClient ?? HttpClient();

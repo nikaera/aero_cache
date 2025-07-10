@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:aero_cache/src/exceptions.dart';
 import 'package:aero_cache/src/meta_info.dart';
@@ -9,13 +8,17 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:zstandard/zstandard.dart';
 
-/// Zstandard compression level
-const int kZstdCompressionLevel = 3;
 
 /// Manages cache files and metadata
 class CacheManager {
   /// Create a new CacheManager instance
-  CacheManager({this.disableCompression = false, this.cacheDirPath});
+  CacheManager({
+    this.disableCompression = false,
+    this.compressionLevel = 3,
+    this.cacheDirPath,
+    this.defaultCacheDuration = const Duration(days: 5),
+    }) : assert(compressionLevel >= 1 && compressionLevel <= 22,
+             'Compression level must be between 1 and 22');
 
   /// Cache directory instance
   late final Directory _cacheDirectory;
@@ -23,11 +26,17 @@ class CacheManager {
   /// Zstandard compression instance
   late final Zstandard _zstandard;
 
+  /// Zstandard compression level
+  final int compressionLevel;
+
   /// Whether compression is disabled
   final bool disableCompression;
 
   /// Optional custom cache directory path
   final String? cacheDirPath;
+
+  /// Default cache duration
+  final Duration defaultCacheDuration;
 
   /// Initialize the cache directory and compression
   Future<void> initialize() async {
@@ -99,7 +108,7 @@ class CacheManager {
         dataToWrite = rawData;
       } else {
         dataToWrite =
-            await _zstandard.compress(rawData, kZstdCompressionLevel) ??
+            await _zstandard.compress(rawData, compressionLevel) ??
             rawData;
       }
       debugPrint(
@@ -160,9 +169,9 @@ class CacheManager {
     if (expires != null) {
       return HttpDate.parse(expires);
     }
-
-    // デフォルトで1時間のキャッシュ
-    return DateTime.now().add(const Duration(hours: 1));
+    
+    // If no cache-control or expires header, use default cache duration
+    return DateTime.now().add(defaultCacheDuration);
   }
 
   String _getUrlHash(String url) {
