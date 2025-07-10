@@ -208,5 +208,18 @@ void main() {
       final meta = MetaInfo.fromJson(json);
       expect(meta.requiresRevalidation, false);
     });
+
+    test('isWithinStalePeriod returns true when within maxStale seconds after expiresAt', () {
+      final now = DateTime.now();
+      final expiresAt = now.subtract(const Duration(seconds: 30));
+      final meta = MetaInfo(
+        url: 'https://example.com/test.jpg',
+        createdAt: now.subtract(const Duration(hours: 1)),
+        expiresAt: expiresAt,
+        contentLength: 1024,
+      );
+      // 30秒経過、maxStale=60ならtrue
+      expect(meta.isWithinStalePeriod(60), isTrue);
+    });
   });
 }

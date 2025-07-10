@@ -56,6 +56,7 @@ class AeroCache {
     ProgressCallback? onProgress,
     bool noCache = false,
     int? maxAge,
+    int? maxStale,
   }) async {
     try {
       final meta = await _cacheManager.getMeta(url);
@@ -64,6 +65,11 @@ class AeroCache {
         if (maxAge != null && !meta.isOlderThan(maxAge)) {
           // キャッシュがmaxAgeより古い場合は再検証（サーバーへリクエスト）
           return await _downloadAndCache(url, meta, onProgress);
+        }
+
+        // max-stale 許容判定
+        if (maxStale != null && meta.isWithinStalePeriod(maxStale)) {
+          return await _cacheManager.getData(url);
         }
 
         // Return stale data and update cache in the background (SWR)

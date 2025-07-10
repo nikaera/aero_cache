@@ -95,6 +95,24 @@ class MetaInfo {
   bool isOlderThan(int maxAge) =>
       maxAge == 0 || DateTime.now().difference(createdAt).inSeconds > maxAge;
 
+  /// Determines whether the current object is within the allowed stale period.
+  ///
+  /// Returns `true` if the object is considered stale (`isStale` is `true`)
+  /// and the time elapsed since `expiresAt` is less than or equal to [maxStale] seconds.
+  /// Returns `false` if the object is not stale, `expiresAt` is `null`,
+  /// or the elapsed time exceeds [maxStale].
+  ///
+  /// [maxStale] The maximum number of seconds allowed for the object to be considered within the stale period.
+  bool isWithinStalePeriod(int maxStale) {
+    if (isStale) {
+      if (expiresAt != null) {
+        final staleSeconds = DateTime.now().difference(expiresAt!).inSeconds;
+        return staleSeconds <= maxStale;
+      }
+    }
+    return false;
+  }
+
   /// Convert to JSON Map
   Map<String, dynamic> toJson() {
     return {

@@ -349,6 +349,35 @@ void main() {
         throwsA(isA<AeroCacheException>()),
       );
     });
+
+    test('should accept stale response when max-stale allows', () async {
+      await aeroCache.initialize();
+
+      const url = 'https://example.com/max-stale-test.jpg';
+      final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+
+      // First request creates cache with short max-age
+      mockHttpClient.setResponse(url, testData, {
+        'cache-control': 'max-age=1',
+      });
+
+      final result1 = await aeroCache.get(url);
+      expect(result1, testData);
+
+      // Wait for cache to become stale
+      await Future<void>.delayed(const Duration(seconds: 2));
+
+      // Second request with max-stale should accept stale cache
+      final result2 = await aeroCache.get(
+        url,
+        maxStale: 600, // Allow stale content up to 10 minutes
+      );
+
+      expect(result1, testData);
+      expect(result2, testData);
+      // Should only make one request since stale cache is acceptable
+      expect(mockHttpClient.requestCount, 1);
+    });
   });
 }
 
