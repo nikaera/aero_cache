@@ -21,7 +21,11 @@ class CacheControlParser {
         final equalIndex = trimmed.indexOf('=');
         final directive = trimmed.substring(0, equalIndex).trim();
         final value = trimmed.substring(equalIndex + 1).trim();
-        directives[directive] = value;
+        
+        // Skip empty directive names
+        if (directive.isNotEmpty) {
+          directives[directive] = value;
+        }
       } else {
         // Boolean directive (e.g., no-cache, no-store)
         directives[trimmed] = null;
@@ -54,9 +58,17 @@ class CacheControlParser {
     final cacheControl = headers.value('cache-control');
     if (cacheControl == null) return null;
 
-    final maxAgeMatch = RegExp(r'max-age=(\d+)').firstMatch(cacheControl);
-    if (maxAgeMatch != null) {
-      return int.tryParse(maxAgeMatch.group(1)!);
+    // Parse directives to handle priorities
+    final directives = parse(cacheControl);
+    
+    // no-store takes precedence over max-age
+    if (directives.containsKey('no-store')) {
+      return null;
+    }
+
+    final maxAgeValue = directives['max-age'];
+    if (maxAgeValue != null) {
+      return int.tryParse(maxAgeValue);
     }
 
     return null;

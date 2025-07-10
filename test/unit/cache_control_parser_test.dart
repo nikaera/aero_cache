@@ -184,6 +184,58 @@ void main() {
       });
       expect(CacheControlParser.getVaryHeaders(headers), ['*']);
     });
+
+    test('should handle directive priorities - no-store overrides max-age', () {
+      final headers = _createMockHeaders({
+        'cache-control': 'no-store, max-age=3600',
+      });
+      expect(CacheControlParser.hasNoStore(headers), true);
+      expect(CacheControlParser.getMaxAge(headers), null);
+    });
+
+    test('should handle invalid directive values gracefully', () {
+      const cacheControlValue = 'max-age=invalid, no-cache, stale-if-error=-1';
+      final directives = CacheControlParser.parse(cacheControlValue);
+      
+      expect(directives['max-age'], 'invalid');
+      expect(directives['no-cache'], null);
+      expect(directives['stale-if-error'], '-1');
+      
+      // Methods should return null for invalid values
+      final headers = _createMockHeaders({
+        'cache-control': cacheControlValue,
+      });
+      expect(CacheControlParser.getMaxAge(headers), null);
+      expect(CacheControlParser.getStaleIfError(headers), null);
+    });
+
+    test('should handle malformed directive syntax gracefully', () {
+      const cacheControlValue = 'max-age=, =3600, , malformed=value=extra';
+      final directives = CacheControlParser.parse(cacheControlValue);
+      
+      expect(directives['max-age'], '');
+      expect(directives.containsKey(''), false); // Empty key filtered out
+      expect(directives['malformed'], 'value=extra');
+      
+      // Should not crash and should handle gracefully
+      final headers = _createMockHeaders({
+        'cache-control': cacheControlValue,
+      });
+      expect(CacheControlParser.getMaxAge(headers), null);
+      expect(CacheControlParser.hasNoStore(headers), false);
+    });
+
+    test('should ignore empty directive names and values', () {
+      const cacheControlValue = 'max-age=, =3600, , ';
+      final directives = CacheControlParser.parse(cacheControlValue);
+      
+      // Empty directive names should be filtered out
+      expect(directives.containsKey(''), false);
+      // max-age with empty value should still be included
+      expect(directives.containsKey('max-age'), true);
+      expect(directives['max-age'], '');
+      expect(directives.length, 1);
+    });
   });
 }
 

@@ -66,9 +66,9 @@
 ## Implementation Considerations
 
 ### Enhanced Parsing Functionality
-- [ ] Parse multiple directives in Cache-Control header
-- [ ] Process directive priorities
-- [ ] Properly handle invalid directives
+- [x] Parse multiple directives in Cache-Control header
+- [x] Process directive priorities
+- [x] Properly handle invalid directives
 
 ### MetaInfo Extension
 - [ ] Store information for each directive
