@@ -442,6 +442,29 @@ void main() {
         );
       },
     );
+
+    test('should not store response when no-store request directive is used', () async {
+      await aeroCache.initialize();
+
+      const url = 'https://example.com/no-store-request-test.jpg';
+      final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+
+      // Set up response
+      mockHttpClient.setResponse(url, testData, {
+        'cache-control': 'max-age=3600',
+      });
+
+      // First request with no-store directive should not cache the response
+      final result1 = await aeroCache.get(url, noStore: true);
+      expect(result1, testData);
+
+      // Second request should make another network request since nothing was cached
+      final result2 = await aeroCache.get(url);
+      expect(result2, testData);
+      
+      // Should make two requests since no-store prevented caching
+      expect(mockHttpClient.requestCount, 2);
+    });
   });
 }
 

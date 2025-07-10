@@ -59,6 +59,7 @@ class AeroCache {
     int? maxStale,
     int? minFresh,
     bool onlyIfCached = false,
+    bool noStore = false,
   }) async {
     try {
       final meta = await _cacheManager.getMeta(url);
@@ -103,6 +104,11 @@ class AeroCache {
         if (!meta.isStale && !meta.requiresRevalidation) {
           return await _cacheManager.getData(url);
         }
+      }
+
+      // Handle no-store directive - download only without caching
+      if (noStore) {
+        return await _downloadOnly(url, onProgress);
       }
 
       return await _downloadAndCache(url, meta, onProgress);
@@ -178,6 +184,41 @@ class AeroCache {
         }
       }
 
+      if (e is AeroCacheException) {
+        rethrow;
+      }
+      throw AeroCacheException('Failed to download $url', e);
+    }
+  }
+
+  Future<Uint8List> _downloadOnly(
+    String url,
+    ProgressCallback? onProgress,
+  ) async {
+    try {
+      final uri = Uri.parse(url);
+      final request = await _httpClient.getUrl(uri);
+      final response = await request.close();
+
+      if (response.statusCode != 200) {
+        throw AeroCacheException('HTTP ${response.statusCode} for $url');
+      }
+
+      final contentLength = response.contentLength;
+      final chunks = <List<int>>[];
+      var received = 0;
+
+      await for (final chunk in response) {
+        chunks.add(chunk);
+        received += chunk.length;
+
+        if (onProgress != null && contentLength > 0) {
+          onProgress(received, contentLength);
+        }
+      }
+
+      return Uint8List.fromList(chunks.expand((x) => x).toList());
+    } catch (e) {
       if (e is AeroCacheException) {
         rethrow;
       }

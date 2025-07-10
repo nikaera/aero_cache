@@ -60,8 +60,8 @@
 14. [x] `stale-if-error` (Request/Response) - Fallback on error
 15. [x] `max-stale` (Request) - Allow stale response
 16. [x] `min-fresh` (Request) - Minimum freshness requirement
-17. [ ] `only-if-cached` (Request) - Cache-only mode
-18. [ ] `no-store` (Request) - Prohibit cache storage request
+17. [x] `only-if-cached` (Request) - Cache-only mode
+18. [x] `no-store` (Request) - Prohibit cache storage request
 
 ## Implementation Considerations
 
