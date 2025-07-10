@@ -14,6 +14,7 @@ class MetaInfo {
     this.requiresRevalidation = false,
     this.staleWhileRevalidate,
     this.staleIfError,
+    this.mustRevalidate = false,
   });
 
   /// Create MetaInfo from JSON data
@@ -31,6 +32,7 @@ class MetaInfo {
       requiresRevalidation: json['requiresRevalidation'] as bool? ?? false,
       staleWhileRevalidate: json['staleWhileRevalidate'] as int?,
       staleIfError: json['staleIfError'] as int?,
+      mustRevalidate: json['mustRevalidate'] as bool? ?? false,
     );
   }
 
@@ -68,11 +70,15 @@ class MetaInfo {
   /// Stale-if-error value in seconds
   final int? staleIfError;
 
+  /// Whether the cache must be revalidated when stale
+  final bool mustRevalidate;
+
   /// Check if the cache is stale (expired)
   bool get isStale => expiresAt != null && DateTime.now().isAfter(expiresAt!);
 
   /// Check if stale content can be served during revalidation
   bool get canServeStale {
+    if (mustRevalidate) return false;
     if (!isStale || staleWhileRevalidate == null || expiresAt == null) {
       return false;
     }
@@ -83,6 +89,7 @@ class MetaInfo {
 
   /// Check if stale content can be served on error
   bool get canServeStaleOnError {
+    if (mustRevalidate) return false;
     if (!isStale || staleIfError == null || expiresAt == null) {
       return false;
     }
@@ -141,6 +148,7 @@ class MetaInfo {
       'requiresRevalidation': requiresRevalidation,
       'staleWhileRevalidate': staleWhileRevalidate,
       'staleIfError': staleIfError,
+      'mustRevalidate': mustRevalidate,
     };
   }
 

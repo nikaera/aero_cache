@@ -7,11 +7,11 @@
 ## Unimplemented Response Directives
 
 ### Basic Caching Controls
-- [ ] `no-cache` - Requires revalidation (can be cached but must be validated before use)
-- [ ] `no-store` - Caching prohibited (both private and shared caches)
+- [x] `no-cache` - Requires revalidation (can be cached but must be validated before use)
+- [x] `no-store` - Caching prohibited (both private and shared caches)
 
 ### Revalidation Controls
-- [ ] `must-revalidate` - Must revalidate when stale
+- [x] `must-revalidate` - Must revalidate when stale
 
 ### Advanced Caching Strategies
 - [x] `stale-while-revalidate` - Serve stale data while revalidating in the background
@@ -32,14 +32,14 @@
 ## Unimplemented Request Directives
 
 ### Basic Request Controls
-- [ ] `no-cache` - Revalidation request (used for forced reload)
-- [ ] `no-store` - Prohibit cache storage request
-- [ ] `max-age` - Accept only responses generated within specified seconds
+- [x] `no-cache` - Revalidation request (used for forced reload)
+- [x] `no-store` - Prohibit cache storage request
+- [x] `max-age` - Accept only responses generated within specified seconds
 
 ### Detailed Cache Controls
 - [x] `max-stale` - Accept stale responses up to specified seconds
-- [ ] `min-fresh` - Accept only responses that are fresh for at least specified seconds
-- [ ] `only-if-cached` - Only cached responses (prohibit network access)
+- [x] `min-fresh` - Accept only responses that are fresh for at least specified seconds
+- [x] `only-if-cached` - Only cached responses (prohibit network access)
 
 ### Others
 - [x] `stale-if-error` - Allow stale response in case of error

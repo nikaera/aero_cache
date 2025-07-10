@@ -81,7 +81,7 @@ class AeroCache {
 
         // min-fresh requirement check
         if (minFresh != null && !meta.hasMinimumFreshness(minFresh)) {
-            // Not fresh enough, must fetch new data
+          // Not fresh enough, must fetch new data
           return await _downloadAndCache(url, meta, onProgress);
         }
 

@@ -224,5 +224,28 @@ void main() {
         expect(meta.isWithinStalePeriod(60), isTrue);
       },
     );
+
+    test('should enforce must-revalidate when stale', () {
+      final now = DateTime.now();
+      final expiresAt = now.subtract(const Duration(minutes: 30));
+      final meta = MetaInfo(
+        url: 'https://example.com/test.jpg',
+        createdAt: now.subtract(const Duration(hours: 1)),
+        expiresAt: expiresAt,
+        contentLength: 1024,
+        mustRevalidate: true,
+        staleWhileRevalidate: 600, // 10 minutes
+        staleIfError: 600, // 10 minutes
+      );
+      expect(meta.isStale, true);
+      expect(
+        meta.canServeStale,
+        false,
+      ); // must-revalidate overrides stale-while-revalidate
+      expect(
+        meta.canServeStaleOnError,
+        false,
+      ); // must-revalidate overrides stale-if-error
+    });
   });
 }

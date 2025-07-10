@@ -113,6 +113,7 @@ class CacheManager {
           headers,
         ),
         staleIfError: CacheControlParser.getStaleIfError(headers),
+        mustRevalidate: CacheControlParser.hasMustRevalidate(headers),
       );
 
       await Future.wait([
@@ -149,6 +150,7 @@ class CacheManager {
             oldMeta.staleWhileRevalidate,
         staleIfError:
             CacheControlParser.getStaleIfError(headers) ?? oldMeta.staleIfError,
+        mustRevalidate: CacheControlParser.hasMustRevalidate(headers),
       );
 
       await _fileManager.writeMeta(url, newMeta);
