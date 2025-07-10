@@ -61,4 +61,25 @@ class CacheControlParser {
     
     return null;
   }
+  
+  /// Check if the response has stale-while-revalidate directive
+  static bool hasStaleWhileRevalidate(HttpHeaders headers) {
+    final cacheControl = headers.value('cache-control');
+    return cacheControl != null && 
+           cacheControl.contains('stale-while-revalidate');
+  }
+  
+  /// Extract stale-while-revalidate value from Cache-Control header
+  static int? getStaleWhileRevalidate(HttpHeaders headers) {
+    final cacheControl = headers.value('cache-control');
+    if (cacheControl == null) return null;
+    
+    final staleWhileRevalidateMatch = 
+        RegExp(r'stale-while-revalidate=(\d+)').firstMatch(cacheControl);
+    if (staleWhileRevalidateMatch != null) {
+      return int.tryParse(staleWhileRevalidateMatch.group(1)!);
+    }
+    
+    return null;
+  }
 }

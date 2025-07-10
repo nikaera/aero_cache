@@ -125,6 +125,7 @@ class CacheManager {
         contentLength: rawData.length,
         contentType: headers.value('content-type'),
         requiresRevalidation: CacheControlParser.hasNoCache(headers),
+        staleWhileRevalidate: CacheControlParser.getStaleWhileRevalidate(headers),
       );
       await Future.wait([
         cacheFile.writeAsBytes(dataToWrite),
@@ -151,6 +152,9 @@ class CacheManager {
         contentLength: oldMeta.contentLength,
         contentType: headers.value('content-type') ?? oldMeta.contentType,
         requiresRevalidation: CacheControlParser.hasNoCache(headers),
+        staleWhileRevalidate: 
+            CacheControlParser.getStaleWhileRevalidate(headers) ?? 
+            oldMeta.staleWhileRevalidate,
       );
       await metaFile.writeAsString(newMeta.toJsonString());
     } catch (e) {

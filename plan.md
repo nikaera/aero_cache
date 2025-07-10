@@ -18,7 +18,7 @@
 - [ ] `immutable` - Absolutely unchanged while fresh
 
 ### Advanced Caching Strategies
-- [ ] `stale-while-revalidate` - Serve stale data while revalidating in the background
+- [x] `stale-while-revalidate` - Serve stale data while revalidating in the background
 - [ ] `stale-if-error` - Use stale response in case of error
 
 ### Header Handling
@@ -48,7 +48,7 @@
 3. [x] `must-revalidate` (Response) - Force revalidation when stale
 
 ### Medium Priority (Advanced Caching Strategies)
-7. [ ] `stale-while-revalidate` (Response) - Background revalidation
+7. [x] `stale-while-revalidate` (Response) - Background revalidation
 8. [ ] `immutable` (Response) - Immutable content
 9. [ ] `no-cache` (Request) - Force revalidation request
 10. [ ] `max-age` (Request) - Maximum allowed age

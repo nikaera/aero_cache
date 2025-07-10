@@ -12,6 +12,7 @@ class MetaInfo {
     this.expiresAt,
     this.contentType,
     this.requiresRevalidation = false,
+    this.staleWhileRevalidate,
   });
 
   /// Create MetaInfo from JSON data
@@ -27,6 +28,7 @@ class MetaInfo {
       contentLength: json['contentLength'] as int,
       contentType: json['contentType'] as String?,
       requiresRevalidation: json['requiresRevalidation'] as bool? ?? false,
+      staleWhileRevalidate: json['staleWhileRevalidate'] as int?,
     );
   }
 
@@ -58,8 +60,21 @@ class MetaInfo {
   /// Whether the cache requires revalidation (no-cache directive)
   final bool requiresRevalidation;
 
+  /// Stale-while-revalidate value in seconds
+  final int? staleWhileRevalidate;
+
   /// Check if the cache is stale (expired)
   bool get isStale => expiresAt != null && DateTime.now().isAfter(expiresAt!);
+
+  /// Check if stale content can be served during revalidation
+  bool get canServeStale {
+    if (!isStale || staleWhileRevalidate == null || expiresAt == null) {
+      return false;
+    }
+    final staleWindow = Duration(seconds: staleWhileRevalidate!);
+    final staleExpiry = expiresAt!.add(staleWindow);
+    return DateTime.now().isBefore(staleExpiry);
+  }
 
   /// Convert to JSON Map
   Map<String, dynamic> toJson() {
@@ -72,6 +87,7 @@ class MetaInfo {
       'contentLength': contentLength,
       'contentType': contentType,
       'requiresRevalidation': requiresRevalidation,
+      'staleWhileRevalidate': staleWhileRevalidate,
     };
   }
 

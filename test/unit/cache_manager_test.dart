@@ -236,6 +236,74 @@ void main() {
       final mustRevalidate = CacheControlParser.hasMustRevalidate(headers);
       expect(mustRevalidate, false);
     });
+
+    test('should identify stale-while-revalidate directive', () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({
+        'cache-control': 'stale-while-revalidate=300',
+      });
+      final hasStaleWhileRevalidate = CacheControlParser.hasStaleWhileRevalidate(headers);
+      expect(hasStaleWhileRevalidate, true);
+    });
+
+    test('should return false for non-stale-while-revalidate responses', () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({
+        'cache-control': 'max-age=3600',
+      });
+      final hasStaleWhileRevalidate = CacheControlParser.hasStaleWhileRevalidate(headers);
+      expect(hasStaleWhileRevalidate, false);
+    });
+
+    test('should extract stale-while-revalidate value', () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({
+        'cache-control': 'max-age=3600, stale-while-revalidate=300',
+      });
+      final staleWhileRevalidateValue = CacheControlParser.getStaleWhileRevalidate(headers);
+      expect(staleWhileRevalidateValue, 300);
+    });
+
+    test('should return null when stale-while-revalidate is not present', () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({
+        'cache-control': 'max-age=3600',
+      });
+      final staleWhileRevalidateValue = CacheControlParser.getStaleWhileRevalidate(headers);
+      expect(staleWhileRevalidateValue, null);
+    });
+
+    test('should store stale-while-revalidate value in MetaInfo', () async {
+      await cacheManager.initialize();
+      const url = 'https://example.com/test.jpg';
+      final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+      final headers = _createMockHeaders({
+        'cache-control': 'max-age=3600, stale-while-revalidate=300',
+      });
+      await cacheManager.saveData(url, testData, headers);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      final meta = await cacheManager.getMeta(url);
+      expect(meta, isNotNull);
+      expect(meta!.staleWhileRevalidate, 300);
+    });
+
+    test('should allow serving stale content within stale-while-revalidate window', 
+        () async {
+      await cacheManager.initialize();
+      const url = 'https://example.com/test.jpg';
+      final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+      // Create an entry that will be stale but within 
+      // stale-while-revalidate window
+      final headers = _createMockHeaders({
+        'cache-control': 'max-age=0, stale-while-revalidate=300',
+      });
+      await cacheManager.saveData(url, testData, headers);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      final meta = await cacheManager.getMeta(url);
+      expect(meta, isNotNull);
+      expect(meta!.isStale, true);
+      expect(meta.canServeStale, true);
+    });
   });
 }
 
