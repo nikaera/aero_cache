@@ -60,9 +60,27 @@ class AeroCache {
       final meta = await _cacheManager.getMeta(url);
 
       // Check for no-cache request directive
-      final hasNoCacheRequest = requestDirectives?.containsKey('no-cache') ?? false;
+      final hasNoCacheRequest =
+          requestDirectives?.containsKey('no-cache') ?? false;
 
-      if (meta != null && !hasNoCacheRequest) {
+      // Check for max-age request directive
+      var isCacheOlderThanMaxAge = false;
+      if (requestDirectives?.containsKey('max-age') ?? false) {
+        final maxAgeStr = requestDirectives!['max-age'];
+        if (maxAgeStr != null) {
+          final maxAge = int.tryParse(maxAgeStr);
+          if (maxAge != null && meta != null) {
+            final ageSeconds = DateTime.now()
+                .difference(meta.createdAt)
+                .inSeconds;
+            // For max-age=0, always reject cached responses
+            // (force revalidation)
+            isCacheOlderThanMaxAge = maxAge == 0 || ageSeconds > maxAge;
+          }
+        }
+      }
+
+      if (meta != null && !hasNoCacheRequest && !isCacheOlderThanMaxAge) {
         // Return stale data and update cache in the background (SWR)
         if (await _cacheManager.needsBackgroundRevalidation(url)) {
           final staleData = await _cacheManager.getStaleData(url);

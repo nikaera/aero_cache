@@ -239,13 +239,49 @@ void main() {
 
       // Second request with no-cache directive should force revalidation
       mockHttpClient.setNotModifiedResponse(url);
-      final result2 = await aeroCache.get(url, requestDirectives: {'no-cache': null});
+      final result2 = await aeroCache.get(
+        url,
+        requestDirectives: {'no-cache': null},
+      );
 
       expect(result1, testData);
       expect(result2, testData);
       // Should make two requests due to no-cache request directive
       expect(mockHttpClient.requestCount, 2);
     });
+
+    test(
+      'should reject cached response older than max-age request directive',
+      () async {
+        await aeroCache.initialize();
+
+        const url = 'https://example.com/max-age-request-test.jpg';
+        final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+
+        // First request creates cache with long max-age
+        mockHttpClient.setResponse(url, testData, {
+          'cache-control': 'max-age=7200', // 2 hours
+        });
+
+        final result1 = await aeroCache.get(url);
+
+        // Wait a small amount to ensure cache age > 0
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        // Second request with max-age=0 should reject any cached response
+        // and make a new request
+        mockHttpClient.setNotModifiedResponse(url);
+        final result2 = await aeroCache.get(
+          url,
+          requestDirectives: {'max-age': '0'},
+        );
+
+        expect(result1, testData);
+        expect(result2, testData);
+        // Should make two requests since cache is older than request max-age
+        expect(mockHttpClient.requestCount, 2);
+      },
+    );
   });
 }
 

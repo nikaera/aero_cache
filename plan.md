@@ -53,7 +53,7 @@
 ### Medium Priority (Advanced Caching Strategies)
 7. [x] `stale-while-revalidate` (Response) - Background revalidation
 9. [x] `no-cache` (Request) - Force revalidation request
-10. [ ] `max-age` (Request) - Maximum allowed age
+10. [x] `max-age` (Request) - Maximum allowed age
 
 ### Low Priority (Special Use Cases)
 13. [ ] `no-transform` (Request/Response) - Prohibit content transformation
