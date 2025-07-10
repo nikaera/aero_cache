@@ -3,7 +3,7 @@
 
 - [x] Analyze HTTP specification for `Vary` header semantics
 - [x] Identify all relevant request headers that may affect cache key calculation
-- [ ] Design cache key structure to incorporate `Vary` header values
+- [x] Design cache key structure to incorporate `Vary` header values
 - [ ] Implement logic to parse and store `Vary` header from origin responses
 - [ ] Update cache lookup to consider `Vary`-specified headers from requests
 - [ ] Add tests for cache hits/misses with different `Vary` header scenarios
