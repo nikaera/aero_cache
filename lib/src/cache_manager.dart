@@ -1,13 +1,13 @@
-import 'dart:convert';
 import 'dart:io';
 
+import 'package:aero_cache/src/cache_compression.dart';
 import 'package:aero_cache/src/cache_control_parser.dart';
+import 'package:aero_cache/src/cache_expiration_calculator.dart';
+import 'package:aero_cache/src/cache_file_manager.dart';
 import 'package:aero_cache/src/exceptions.dart';
 import 'package:aero_cache/src/meta_info.dart';
-import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:zstandard/zstandard.dart';
 
 /// Manages cache files and metadata
 class CacheManager {
@@ -25,14 +25,17 @@ class CacheManager {
   /// Cache directory instance
   late final Directory _cacheDirectory;
 
-  /// Zstandard compression instance
-  late final Zstandard _zstandard;
+  /// Cache file manager instance
+  late final CacheFileManager _fileManager;
 
-  /// Zstandard compression level
-  final int compressionLevel;
+  /// Cache compression instance
+  late final CacheCompression _compression;
 
   /// Whether compression is disabled
   final bool disableCompression;
+
+  /// Zstandard compression level
+  final int compressionLevel;
 
   /// Optional custom cache directory path
   final String? cacheDirPath;
@@ -50,9 +53,13 @@ class CacheManager {
         appDir = await getTemporaryDirectory();
       }
       _cacheDirectory = Directory('${appDir.path}/aero_cache');
-      if (!disableCompression) {
-        _zstandard = Zstandard();
-      }
+      _fileManager = CacheFileManager(_cacheDirectory);
+      _compression = CacheCompression(
+        disableCompression: disableCompression,
+        compressionLevel: compressionLevel,
+      );
+      _compression.initialize();
+
       if (!_cacheDirectory.existsSync()) {
         await _cacheDirectory.create(recursive: true);
       }
@@ -63,34 +70,14 @@ class CacheManager {
 
   /// Get metadata information for a URL
   Future<MetaInfo?> getMeta(String url) async {
-    try {
-      final metaFile = _getMetaFile(url);
-      if (!metaFile.existsSync()) {
-        return null;
-      }
-
-      final metaContent = await metaFile.readAsString();
-      return MetaInfo.fromJsonString(metaContent);
-    } catch (e) {
-      throw AeroCacheException('Failed to read meta information for $url', e);
-    }
+    return _fileManager.readMeta(url);
   }
 
   /// Get cached data for a URL
   Future<Uint8List> getData(String url) async {
     try {
-      final cacheFile = _getCacheFile(url);
-      if (!cacheFile.existsSync()) {
-        throw AeroCacheException('Cache file not found for $url');
-      }
-
-      final compressedData = await cacheFile.readAsBytes();
-      if (disableCompression) {
-        return Uint8List.fromList(compressedData);
-      }
-      final rawData =
-          await _zstandard.decompress(compressedData) ?? compressedData;
-      return Uint8List.fromList(rawData);
+      final compressedData = await _fileManager.readCacheData(url);
+      return await _compression.decompress(compressedData);
     } catch (e) {
       throw AeroCacheException('Failed to read cache data for $url', e);
     }
@@ -103,25 +90,22 @@ class CacheManager {
     HttpHeaders headers,
   ) async {
     try {
-      final cacheFile = _getCacheFile(url);
-      final metaFile = _getMetaFile(url);
-      Uint8List dataToWrite;
-      if (disableCompression) {
-        dataToWrite = rawData;
-      } else {
-        dataToWrite =
-            await _zstandard.compress(rawData, compressionLevel) ?? rawData;
-      }
+      final dataToWrite = await _compression.compress(rawData);
+
       debugPrint(
         'Saving cache for $url, '
         'compressionRatio: ${dataToWrite.length / rawData.length}',
       );
+
       final metaInfo = MetaInfo(
         url: url,
         etag: headers.value('etag'),
         lastModified: headers.value('last-modified'),
         createdAt: DateTime.now(),
-        expiresAt: _calculateExpiresAt(headers),
+        expiresAt: CacheExpirationCalculator.calculateExpiresAt(
+          headers,
+          defaultCacheDuration,
+        ),
         contentLength: rawData.length,
         contentType: headers.value('content-type'),
         requiresRevalidation: CacheControlParser.hasNoCache(headers),
@@ -130,9 +114,10 @@ class CacheManager {
         ),
         staleIfError: CacheControlParser.getStaleIfError(headers),
       );
+
       await Future.wait([
-        cacheFile.writeAsBytes(dataToWrite),
-        metaFile.writeAsString(metaInfo.toJsonString()),
+        _fileManager.writeCacheData(url, dataToWrite),
+        _fileManager.writeMeta(url, metaInfo),
       ]);
     } catch (e) {
       throw AeroCacheException('Failed to save cache data for $url', e);
@@ -142,16 +127,20 @@ class CacheManager {
   /// Update metadata for a URL
   Future<void> updateMeta(String url, HttpHeaders headers) async {
     try {
-      final metaFile = _getMetaFile(url);
-      if (!metaFile.existsSync()) return;
-      final metaContent = await metaFile.readAsString();
-      final oldMeta = MetaInfo.fromJsonString(metaContent);
+      final oldMeta = await _fileManager.readMeta(url);
+      if (oldMeta == null) return;
+
       final newMeta = MetaInfo(
         url: oldMeta.url,
         etag: headers.value('etag') ?? oldMeta.etag,
         lastModified: headers.value('last-modified') ?? oldMeta.lastModified,
         createdAt: oldMeta.createdAt,
-        expiresAt: _calculateExpiresAt(headers) ?? oldMeta.expiresAt,
+        expiresAt:
+            CacheExpirationCalculator.calculateExpiresAt(
+              headers,
+              defaultCacheDuration,
+            ) ??
+            oldMeta.expiresAt,
         contentLength: oldMeta.contentLength,
         contentType: headers.value('content-type') ?? oldMeta.contentType,
         requiresRevalidation: CacheControlParser.hasNoCache(headers),
@@ -161,85 +150,21 @@ class CacheManager {
         staleIfError:
             CacheControlParser.getStaleIfError(headers) ?? oldMeta.staleIfError,
       );
-      await metaFile.writeAsString(newMeta.toJsonString());
+
+      await _fileManager.writeMeta(url, newMeta);
     } catch (e) {
       throw AeroCacheException('Failed to update meta for $url', e);
     }
   }
 
-  DateTime? _calculateExpiresAt(HttpHeaders headers) {
-    final maxAge = CacheControlParser.getMaxAge(headers);
-    if (maxAge != null) {
-      return DateTime.now().add(Duration(seconds: maxAge));
-    }
-
-    final expires = headers.value('expires');
-    if (expires != null) {
-      return HttpDate.parse(expires);
-    }
-
-    // If no cache-control or expires header, use default cache duration
-    return DateTime.now().add(defaultCacheDuration);
-  }
-
-  String _getUrlHash(String url) {
-    final bytes = utf8.encode(url);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
-  }
-
-  File _getCacheFile(String url) {
-    final hash = _getUrlHash(url);
-    return File('${_cacheDirectory.path}/$hash.cache');
-  }
-
-  File _getMetaFile(String url) {
-    final hash = _getUrlHash(url);
-    return File('${_cacheDirectory.path}/$hash.meta');
-  }
-
   /// Delete all cache and meta files in the cache directory
   Future<void> clearAllCache() async {
-    try {
-      if (!_cacheDirectory.existsSync()) return;
-      final files = _cacheDirectory.list();
-      await for (final file in files) {
-        if (file is File) {
-          await file.delete();
-        }
-      }
-    } catch (e) {
-      throw AeroCacheException('Failed to clear all cache', e);
-    }
+    return _fileManager.clearAllFiles();
   }
 
   /// Delete all expired cache (.meta) and data files
   Future<void> clearExpiredCache() async {
-    try {
-      if (!_cacheDirectory.existsSync()) return;
-      final files = _cacheDirectory.list();
-      await for (final file in files) {
-        if (file is File && file.path.endsWith('.meta')) {
-          try {
-            final metaContent = await file.readAsString();
-            final meta = MetaInfo.fromJsonString(metaContent);
-            if (meta.isStale) {
-              // キャッシュデータファイルも削除
-              final cacheFile = File(file.path.replaceAll('.meta', '.cache'));
-              if (cacheFile.existsSync()) {
-                await cacheFile.delete();
-              }
-              await file.delete();
-            }
-          } on Exception catch (_) {
-            // 読み込み失敗やパース失敗はスキップ
-            continue;
-          }
-        }
-      }
-    } catch (e) {
-      throw AeroCacheException('Failed to clear expired cache', e);
-    }
+    return _fileManager.clearExpiredFiles();
   }
 
   /// Get stale data for stale-while-revalidate scenarios
