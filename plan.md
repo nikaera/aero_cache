@@ -13,9 +13,6 @@
 ### Revalidation Controls
 - [ ] `must-revalidate` - Must revalidate when stale
 
-### Content Transformation/Optimization
-- [ ] `no-transform` - Prohibits content transformation by intermediaries
-
 ### Advanced Caching Strategies
 - [x] `stale-while-revalidate` - Serve stale data while revalidating in the background
   - [x] Basic parsing and storage of stale-while-revalidate directive
@@ -40,7 +37,6 @@
 - [ ] `only-if-cached` - Only cached responses (prohibit network access)
 
 ### Others
-- [ ] `no-transform` - Prohibit content transformation request
 - [ ] `stale-if-error` - Allow stale response in case of error
 
 ## Implementation Priority
@@ -56,7 +52,6 @@
 10. [x] `max-age` (Request) - Maximum allowed age
 
 ### Low Priority (Special Use Cases)
-13. [ ] `no-transform` (Request/Response) - Prohibit content transformation
 14. [ ] `stale-if-error` (Request/Response) - Fallback on error
 15. [ ] `max-stale` (Request) - Allow stale response
 16. [ ] `min-fresh` (Request) - Minimum freshness requirement
