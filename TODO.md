@@ -1,96 +1,96 @@
 # AeroCache - Cache-Control Implementation TODO
 
-## 実装済みのCache-Controlディレクティブ
-- [x] `max-age` - Response directive (現在実装済み)
-- [x] `expires` - Expires ヘッダーサポート (現在実装済み)
+## Implemented Cache-Control Directives
+- [x] `max-age` - Response directive (currently implemented)
+- [x] `expires` - Expires header support (currently implemented)
 
-## 未実装のResponse Directives（レスポンスディレクティブ）
+## Unimplemented Response Directives
 
-### 基本的なキャッシング制御
-- [ ] `s-maxage` - 共有キャッシュ用のmax-age（プロキシ、CDN用）
-- [ ] `no-cache` - 再検証が必要（キャッシュ可能だが使用前に検証必須）
-- [ ] `no-store` - キャッシュ禁止（プライベート・共有キャッシュ両方）
-- [ ] `private` - プライベートキャッシュのみ（ブラウザローカルキャッシュのみ）
-- [ ] `public` - 共有キャッシュ可能（Authorization付きレスポンスもキャッシュ可）
+### Basic Caching Controls
+- [ ] `s-maxage` - max-age for shared caches (proxies, CDNs)
+- [ ] `no-cache` - Requires revalidation (can be cached but must be validated before use)
+- [ ] `no-store` - Caching prohibited (both private and shared caches)
+- [ ] `private` - Private cache only (browser local cache only)
+- [ ] `public` - Can be cached by shared caches (even responses with Authorization)
 
-### 再検証制御
-- [ ] `must-revalidate` - staleになったら必ず再検証
-- [ ] `proxy-revalidate` - 共有キャッシュでのmust-revalidate
-- [ ] `must-understand` - ステータスコードを理解できる場合のみキャッシュ
+### Revalidation Controls
+- [ ] `must-revalidate` - Must revalidate when stale
+- [ ] `proxy-revalidate` - Must revalidate for shared caches
+- [ ] `must-understand` - Cache only if status code is understood
 
-### コンテンツ変換・最適化
-- [ ] `no-transform` - 中間者によるコンテンツ変換禁止
-- [ ] `immutable` - フレッシュな間は絶対に変更されない
+### Content Transformation/Optimization
+- [ ] `no-transform` - Prohibits content transformation by intermediaries
+- [ ] `immutable` - Absolutely unchanged while fresh
 
-### 高度なキャッシング戦略
-- [ ] `stale-while-revalidate` - stale時にバックグラウンドで再検証しつつ古いデータを返す
-- [ ] `stale-if-error` - エラー時にstaleなレスポンスを使用可能
+### Advanced Caching Strategies
+- [ ] `stale-while-revalidate` - Serve stale data while revalidating in the background
+- [ ] `stale-if-error` - Use stale response in case of error
 
-## 未実装のRequest Directives（リクエストディレクティブ）
+## Unimplemented Request Directives
 
-### 基本的なリクエスト制御
-- [ ] `no-cache` - 再検証要求（強制リロード時に使用）
-- [ ] `no-store` - キャッシュ保存禁止要求
-- [ ] `max-age` - 指定秒数以内に生成されたレスポンスのみ受け入れ
+### Basic Request Controls
+- [ ] `no-cache` - Revalidation request (used for forced reload)
+- [ ] `no-store` - Prohibit cache storage request
+- [ ] `max-age` - Accept only responses generated within specified seconds
 
-### 詳細なキャッシュ制御
-- [ ] `max-stale` - 指定秒数までのstaleレスポンス受け入れ
-- [ ] `min-fresh` - 指定秒数以上フレッシュなレスポンスのみ受け入れ
-- [ ] `only-if-cached` - キャッシュされたレスポンスのみ（ネットワークアクセス禁止）
+### Detailed Cache Controls
+- [ ] `max-stale` - Accept stale responses up to specified seconds
+- [ ] `min-fresh` - Accept only responses that are fresh for at least specified seconds
+- [ ] `only-if-cached` - Only cached responses (prohibit network access)
 
-### その他
-- [ ] `no-transform` - コンテンツ変換禁止要求
-- [ ] `stale-if-error` - エラー時のstaleレスポンス許可
+### Others
+- [ ] `no-transform` - Prohibit content transformation request
+- [ ] `stale-if-error` - Allow stale response in case of error
 
-## 実装優先度
+## Implementation Priority
 
-### 高優先度（基本的なHTTPキャッシング動作）
-1. [x] `no-cache` (Response) - 再検証必須キャッシング
-2. [x] `no-store` (Response) - キャッシュ完全禁止
-3. [x] `private` (Response) - プライベートキャッシュのみ
-4. [x] `public` (Response) - 共有キャッシュ許可
-5. [x] `must-revalidate` (Response) - stale時の強制再検証
+### High Priority (Basic HTTP Caching Behavior)
+1. [x] `no-cache` (Response) - Must revalidate caching
+2. [x] `no-store` (Response) - Completely prohibit caching
+3. [x] `private` (Response) - Private cache only
+4. [x] `public` (Response) - Allow shared cache
+5. [x] `must-revalidate` (Response) - Force revalidation when stale
 
-### 中優先度（高度なキャッシング戦略）
-6. [ ] `s-maxage` (Response) - 共有キャッシュ用max-age
-7. [ ] `stale-while-revalidate` (Response) - バックグラウンド再検証
-8. [ ] `immutable` (Response) - 不変コンテンツ
-9. [ ] `no-cache` (Request) - 強制再検証要求
-10. [ ] `max-age` (Request) - 許可する最大age
+### Medium Priority (Advanced Caching Strategies)
+6. [ ] `s-maxage` (Response) - max-age for shared caches
+7. [ ] `stale-while-revalidate` (Response) - Background revalidation
+8. [ ] `immutable` (Response) - Immutable content
+9. [ ] `no-cache` (Request) - Force revalidation request
+10. [ ] `max-age` (Request) - Maximum allowed age
 
-### 低優先度（特殊なユースケース）
-11. [ ] `proxy-revalidate` (Response) - プロキシ用再検証
-12. [ ] `must-understand` (Response) - 条件付きキャッシング
-13. [ ] `no-transform` (Request/Response) - コンテンツ変換禁止
-14. [ ] `stale-if-error` (Request/Response) - エラー時のフォールバック
-15. [ ] `max-stale` (Request) - staleレスポンス許可
-16. [ ] `min-fresh` (Request) - 最小フレッシュネス要求
-17. [ ] `only-if-cached` (Request) - キャッシュのみモード
-18. [ ] `no-store` (Request) - キャッシュ保存禁止要求
+### Low Priority (Special Use Cases)
+11. [ ] `proxy-revalidate` (Response) - Revalidation for proxies
+12. [ ] `must-understand` (Response) - Conditional caching
+13. [ ] `no-transform` (Request/Response) - Prohibit content transformation
+14. [ ] `stale-if-error` (Request/Response) - Fallback on error
+15. [ ] `max-stale` (Request) - Allow stale response
+16. [ ] `min-fresh` (Request) - Minimum freshness requirement
+17. [ ] `only-if-cached` (Request) - Cache-only mode
+18. [ ] `no-store` (Request) - Prohibit cache storage request
 
-## 実装時の考慮事項
+## Implementation Considerations
 
-### パース機能強化
-- [ ] Cache-Controlヘッダーの複数ディレクティブパース機能
-- [ ] ディレクティブの優先順位処理
-- [ ] 無効なディレクティブの適切な処理
+### Enhanced Parsing Functionality
+- [ ] Parse multiple directives in Cache-Control header
+- [ ] Process directive priorities
+- [ ] Properly handle invalid directives
 
-### MetaInfo拡張
-- [ ] 各ディレクティブ情報の保存
-- [ ] ディレクティブベースの有効性判定
-- [ ] キャッシュポリシー判定ロジック
+### MetaInfo Extension
+- [ ] Store information for each directive
+- [ ] Validity determination based on directives
+- [ ] Cache policy determination logic
 
-### AeroCache API拡張
-- [ ] リクエストオプションでのCache-Control指定
-- [ ] レスポンスディレクティブの情報取得API
-- [ ] キャッシュポリシーのカスタマイズ機能
+### AeroCache API Extension
+- [ ] Specify Cache-Control in request options
+- [ ] API to retrieve response directive information
+- [ ] Customizable cache policy feature
 
-### テスト追加
-- [ ] 各ディレクティブの単体テスト
-- [ ] 複数ディレクティブの組み合わせテスト
-- [ ] エッジケースのテスト（無効値、競合など）
+### Add Tests
+- [ ] Unit tests for each directive
+- [ ] Combination tests for multiple directives
+- [ ] Edge case tests (invalid values, conflicts, etc.)
 
-## 参考リンク
+## Reference Links
 - [MDN Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control)
 - [RFC 9111 - HTTP Caching](https://httpwg.org/specs/rfc9111.html)
 - [RFC 5861 - HTTP Cache-Control Extensions for Stale Content](https://httpwg.org/specs/rfc5861.html)
