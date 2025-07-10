@@ -128,4 +128,25 @@ class CacheControlParser {
         .where((header) => header.isNotEmpty)
         .toList();
   }
+
+  /// Get relevant request headers for cache key calculation based on Vary 
+  /// headers
+  static Map<String, String> getRelevantRequestHeaders(
+    Map<String, String> requestHeaders,
+    List<String> varyHeaders,
+  ) {
+    final relevantHeaders = <String, String>{};
+    
+    for (final varyHeader in varyHeaders) {
+      final lowerVaryHeader = varyHeader.toLowerCase();
+      for (final requestHeader in requestHeaders.keys) {
+        if (requestHeader.toLowerCase() == lowerVaryHeader) {
+          relevantHeaders[requestHeader] = requestHeaders[requestHeader]!;
+          break;
+        }
+      }
+    }
+    
+    return relevantHeaders;
+  }
 }

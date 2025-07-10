@@ -236,6 +236,34 @@ void main() {
       expect(directives['max-age'], '');
       expect(directives.length, 1);
     });
+
+    test('should identify request headers that may affect cache key', () {
+      final requestHeaders = {
+        'accept': 'application/json',
+        'accept-encoding': 'gzip, deflate',
+        'accept-language': 'en-US,en;q=0.9',
+        'user-agent': 'TestAgent/1.0',
+        'authorization': 'Bearer token123',
+        'cookie': 'session=abc123',
+        'referer': 'https://example.com',
+        'host': 'api.example.com',
+        'x-custom-header': 'custom-value',
+      };
+      
+      final varyHeaders = ['Accept', 'Accept-Encoding', 'User-Agent'];
+      
+      // This should identify which request headers are relevant for cache key calculation
+      final relevantHeaders = CacheControlParser.getRelevantRequestHeaders(
+        requestHeaders,
+        varyHeaders,
+      );
+      
+      expect(relevantHeaders, {
+        'accept': 'application/json',
+        'accept-encoding': 'gzip, deflate',
+        'user-agent': 'TestAgent/1.0',
+      });
+    });
   });
 }
 
