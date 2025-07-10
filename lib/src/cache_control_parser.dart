@@ -104,4 +104,16 @@ class CacheControlParser {
 
     return null;
   }
+
+  /// Extract Vary header values
+  static List<String> getVaryHeaders(HttpHeaders headers) {
+    final varyHeader = headers.value('vary');
+    if (varyHeader == null) return [];
+    
+    return varyHeader
+        .split(',')
+        .map((header) => header.trim())
+        .where((header) => header.isNotEmpty)
+        .toList();
+  }
 }

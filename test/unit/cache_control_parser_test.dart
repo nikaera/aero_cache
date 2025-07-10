@@ -152,6 +152,38 @@ void main() {
       });
       expect(CacheControlParser.getStaleIfError(headers), null);
     });
+
+    test('should extract vary header values', () {
+      final headers = _createMockHeaders({
+        'vary': 'Accept-Encoding, User-Agent',
+      });
+      expect(
+        CacheControlParser.getVaryHeaders(headers),
+        ['Accept-Encoding', 'User-Agent'],
+      );
+    });
+
+    test('should return empty list when no vary header', () {
+      final headers = _createMockHeaders({});
+      expect(CacheControlParser.getVaryHeaders(headers), isEmpty);
+    });
+
+    test('should handle single vary header value', () {
+      final headers = _createMockHeaders({
+        'vary': 'Accept-Encoding',
+      });
+      expect(
+        CacheControlParser.getVaryHeaders(headers),
+        ['Accept-Encoding'],
+      );
+    });
+
+    test('should handle vary header with asterisk', () {
+      final headers = _createMockHeaders({
+        'vary': '*',
+      });
+      expect(CacheControlParser.getVaryHeaders(headers), ['*']);
+    });
   });
 }
 
