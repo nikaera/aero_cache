@@ -37,7 +37,7 @@
 - [ ] `max-age` - Accept only responses generated within specified seconds
 
 ### Detailed Cache Controls
-- [ ] `max-stale` - Accept stale responses up to specified seconds
+- [x] `max-stale` - Accept stale responses up to specified seconds
 - [ ] `min-fresh` - Accept only responses that are fresh for at least specified seconds
 - [ ] `only-if-cached` - Only cached responses (prohibit network access)
 
@@ -58,8 +58,8 @@
 
 ### Low Priority (Special Use Cases)
 14. [x] `stale-if-error` (Request/Response) - Fallback on error
-15. [ ] `max-stale` (Request) - Allow stale response
-16. [ ] `min-fresh` (Request) - Minimum freshness requirement
+15. [x] `max-stale` (Request) - Allow stale response
+16. [x] `min-fresh` (Request) - Minimum freshness requirement
 17. [ ] `only-if-cached` (Request) - Cache-only mode
 18. [ ] `no-store` (Request) - Prohibit cache storage request
 

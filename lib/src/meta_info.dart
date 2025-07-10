@@ -113,6 +113,21 @@ class MetaInfo {
     return false;
   }
 
+  /// Check if the cache will remain fresh for at least [minFresh] seconds
+  ///
+  /// Returns `true` if the cache is fresh and will remain fresh for at least
+  /// [minFresh] seconds from now. Returns `false` if the cache is stale,
+  /// `expiresAt` is `null`, or the remaining freshness is less than [minFresh].
+  ///
+  /// [minFresh] The minimum number of seconds the cache should remain fresh
+  bool hasMinimumFreshness(int minFresh) {
+    if (isStale || expiresAt == null) {
+      return false;
+    }
+    final remainingFreshness = expiresAt!.difference(DateTime.now()).inSeconds;
+    return remainingFreshness >= minFresh;
+  }
+
   /// Convert to JSON Map
   Map<String, dynamic> toJson() {
     return {

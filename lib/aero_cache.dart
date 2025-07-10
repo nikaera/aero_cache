@@ -57,6 +57,7 @@ class AeroCache {
     bool noCache = false,
     int? maxAge,
     int? maxStale,
+    int? minFresh,
   }) async {
     try {
       final meta = await _cacheManager.getMeta(url);
@@ -64,6 +65,12 @@ class AeroCache {
         // Check for max-age request directive
         if (maxAge != null && !meta.isOlderThan(maxAge)) {
           // キャッシュがmaxAgeより古い場合は再検証（サーバーへリクエスト）
+          return await _downloadAndCache(url, meta, onProgress);
+        }
+
+        // min-fresh requirement check
+        if (minFresh != null && !meta.hasMinimumFreshness(minFresh)) {
+          // Cache doesn't meet minimum freshness requirement, need fresh response
           return await _downloadAndCache(url, meta, onProgress);
         }
 

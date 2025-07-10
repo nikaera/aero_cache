@@ -378,6 +378,39 @@ void main() {
       // Should only make one request since stale cache is acceptable
       expect(mockHttpClient.requestCount, 1);
     });
+
+    test('should reject cache when min-fresh requirement not met', () async {
+      await aeroCache.initialize();
+
+      const url = 'https://example.com/min-fresh-test.jpg';
+      final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+
+      // First request creates cache with max-age=5
+      mockHttpClient.setResponse(url, testData, {
+        'cache-control': 'max-age=5',
+      });
+
+      final result1 = await aeroCache.get(url);
+      expect(result1, testData);
+
+      // Wait 3 seconds (cache is still fresh but has only 2 seconds left)
+      await Future<void>.delayed(const Duration(seconds: 3));
+
+      // Request with min-fresh=3 should require fresh cache for at least 3 more seconds
+      // Since cache only has 2 seconds left, should make new request
+      mockHttpClient.setResponse(url, testData, {
+        'cache-control': 'max-age=10',
+      });
+
+      final result2 = await aeroCache.get(
+        url,
+        minFresh: 3, // Require cache to be fresh for at least 3 more seconds
+      );
+
+      expect(result2, testData);
+      // Should make two requests since cached content doesn't meet min-fresh requirement
+      expect(mockHttpClient.requestCount, 2);
+    });
   });
 }
 
