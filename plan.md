@@ -19,6 +19,10 @@
 
 ### Advanced Caching Strategies
 - [x] `stale-while-revalidate` - Serve stale data while revalidating in the background
+  - [x] Basic parsing and storage of stale-while-revalidate directive
+  - [x] `canServeStale` getter in MetaInfo for determining if stale content can be served
+  - [x] `getStaleData()` method in CacheManager for retrieving stale content
+  - [x] `needsBackgroundRevalidation()` method for identifying entries requiring revalidation
 - [ ] `stale-if-error` - Use stale response in case of error
 
 ### Header Handling

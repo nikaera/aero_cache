@@ -9,7 +9,6 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:zstandard/zstandard.dart';
 
-
 /// Manages cache files and metadata
 class CacheManager {
   /// Create a new CacheManager instance
@@ -18,8 +17,10 @@ class CacheManager {
     this.compressionLevel = 3,
     this.cacheDirPath,
     this.defaultCacheDuration = const Duration(days: 5),
-    }) : assert(compressionLevel >= 1 && compressionLevel <= 22,
-             'Compression level must be between 1 and 22');
+  }) : assert(
+         compressionLevel >= 1 && compressionLevel <= 22,
+         'Compression level must be between 1 and 22',
+       );
 
   /// Cache directory instance
   late final Directory _cacheDirectory;
@@ -109,12 +110,11 @@ class CacheManager {
         dataToWrite = rawData;
       } else {
         dataToWrite =
-            await _zstandard.compress(rawData, compressionLevel) ??
-            rawData;
+            await _zstandard.compress(rawData, compressionLevel) ?? rawData;
       }
       debugPrint(
         'Saving cache for $url, '
-        'compressionRatio: ${dataToWrite.length/rawData.length}',
+        'compressionRatio: ${dataToWrite.length / rawData.length}',
       );
       final metaInfo = MetaInfo(
         url: url,
@@ -125,7 +125,9 @@ class CacheManager {
         contentLength: rawData.length,
         contentType: headers.value('content-type'),
         requiresRevalidation: CacheControlParser.hasNoCache(headers),
-        staleWhileRevalidate: CacheControlParser.getStaleWhileRevalidate(headers),
+        staleWhileRevalidate: CacheControlParser.getStaleWhileRevalidate(
+          headers,
+        ),
       );
       await Future.wait([
         cacheFile.writeAsBytes(dataToWrite),
@@ -152,8 +154,8 @@ class CacheManager {
         contentLength: oldMeta.contentLength,
         contentType: headers.value('content-type') ?? oldMeta.contentType,
         requiresRevalidation: CacheControlParser.hasNoCache(headers),
-        staleWhileRevalidate: 
-            CacheControlParser.getStaleWhileRevalidate(headers) ?? 
+        staleWhileRevalidate:
+            CacheControlParser.getStaleWhileRevalidate(headers) ??
             oldMeta.staleWhileRevalidate,
       );
       await metaFile.writeAsString(newMeta.toJsonString());
@@ -172,7 +174,7 @@ class CacheManager {
     if (expires != null) {
       return HttpDate.parse(expires);
     }
-    
+
     // If no cache-control or expires header, use default cache duration
     return DateTime.now().add(defaultCacheDuration);
   }
@@ -234,6 +236,30 @@ class CacheManager {
       }
     } catch (e) {
       throw AeroCacheException('Failed to clear expired cache', e);
+    }
+  }
+
+  /// Get stale data for stale-while-revalidate scenarios
+  Future<Uint8List?> getStaleData(String url) async {
+    try {
+      final meta = await getMeta(url);
+      if (meta == null || !meta.canServeStale) {
+        return null;
+      }
+      return await getData(url);
+    } on Exception catch (_) {
+      return null;
+    }
+  }
+
+  /// Check if cache entry needs background revalidation
+  Future<bool> needsBackgroundRevalidation(String url) async {
+    try {
+      final meta = await getMeta(url);
+      if (meta == null) return false;
+      return meta.isStale && meta.canServeStale;
+    } on Exception catch (_) {
+      return false;
     }
   }
 }

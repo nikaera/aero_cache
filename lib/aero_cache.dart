@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -54,9 +55,21 @@ class AeroCache {
     try {
       final meta = await _cacheManager.getMeta(url);
 
-      // Check if we can use cached data
-      if (meta != null && !meta.isStale && !meta.requiresRevalidation) {
-        return await _cacheManager.getData(url);
+      if (meta != null) {
+        // Return stale data and update cache in the background (SWR)
+        if (await _cacheManager.needsBackgroundRevalidation(url)) {
+          final staleData = await _cacheManager.getStaleData(url);
+          if (staleData != null) {
+            // Update cache in the background
+            unawaited(_downloadAndCache(url, meta, onProgress));
+            return staleData;
+          }
+        }
+
+        // Check if we can use cached data
+        if (!meta.isStale && !meta.requiresRevalidation) {
+          return await _cacheManager.getData(url);
+        }
       }
 
       return await _downloadAndCache(url, meta, onProgress);
@@ -111,7 +124,7 @@ class AeroCache {
       }
 
       final data = Uint8List.fromList(chunks.expand((x) => x).toList());
-      
+
       // Check if no-store directive prevents caching
       if (!CacheControlParser.hasNoStore(response.headers)) {
         await _cacheManager.saveData(url, data, response.headers);

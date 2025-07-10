@@ -59,17 +59,14 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _handleDownload() async {
     final rawData = await widget.aeroCache.get(
       fileUrl,
-      onProgress: (received, total) =>
-          debugPrint("$received/$total"),
+      onProgress: (received, total) => debugPrint("$received/$total"),
     );
     final metaInfo = await widget.aeroCache.metaInfo(fileUrl);
-    debugPrint(
-      'File downloaded: $fileUrl, ${metaInfo?.toJsonString()}',
-    );
+    debugPrint('File downloaded: $fileUrl, ${metaInfo?.toJsonString()}');
     final contentType = metaInfo?.contentType ?? 'unknown';
 
     // 動画の場合はVideoPlayerControllerを初期化
-    if(contentType.startsWith('image/')) {
+    if (contentType.startsWith('image/')) {
       setState(() {
         fileData = rawData as Uint8List?;
         fileMetaInfo = metaInfo;

@@ -136,10 +136,10 @@ void main() {
         requiresRevalidation: true,
       );
       expect(metaWithRevalidation.requiresRevalidation, true);
-      
+
       final json = metaWithRevalidation.toJson();
       expect(json['requiresRevalidation'], true);
-      
+
       final restored = MetaInfo.fromJson(json);
       expect(restored.requiresRevalidation, true);
     });
@@ -151,7 +151,7 @@ void main() {
         contentLength: 1024,
       );
       expect(metaWithoutRevalidation.requiresRevalidation, false);
-      
+
       final json = metaWithoutRevalidation.toJson();
       expect(json['requiresRevalidation'], false);
     });
