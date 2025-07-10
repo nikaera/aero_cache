@@ -128,6 +128,7 @@ class CacheManager {
         staleWhileRevalidate: CacheControlParser.getStaleWhileRevalidate(
           headers,
         ),
+        staleIfError: CacheControlParser.getStaleIfError(headers),
       );
       await Future.wait([
         cacheFile.writeAsBytes(dataToWrite),
@@ -157,6 +158,8 @@ class CacheManager {
         staleWhileRevalidate:
             CacheControlParser.getStaleWhileRevalidate(headers) ??
             oldMeta.staleWhileRevalidate,
+        staleIfError:
+            CacheControlParser.getStaleIfError(headers) ?? oldMeta.staleIfError,
       );
       await metaFile.writeAsString(newMeta.toJsonString());
     } catch (e) {
@@ -257,7 +260,33 @@ class CacheManager {
     try {
       final meta = await getMeta(url);
       if (meta == null) return false;
+
       return meta.isStale && meta.canServeStale;
+    } on Exception catch (_) {
+      return false;
+    }
+  }
+
+  /// Get stale data for stale-if-error scenarios
+  Future<Uint8List?> getStaleDataOnError(String url) async {
+    try {
+      final meta = await getMeta(url);
+      if (meta == null || !meta.canServeStaleOnError) {
+        return null;
+      }
+      return await getData(url);
+    } on Exception catch (_) {
+      return null;
+    }
+  }
+
+  /// Check if cache entry can serve stale data on error
+  Future<bool> canServeStaleOnError(String url) async {
+    try {
+      final meta = await getMeta(url);
+      if (meta == null) return false;
+
+      return meta.canServeStaleOnError;
     } on Exception catch (_) {
       return false;
     }

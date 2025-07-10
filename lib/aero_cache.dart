@@ -117,6 +117,11 @@ class AeroCache {
       }
 
       if (response.statusCode != 200) {
+        // Try to serve stale data on error if stale-if-error allows
+        final staleData = await _cacheManager.getStaleDataOnError(url);
+        if (staleData != null) {
+          return staleData;
+        }
         throw AeroCacheException('HTTP ${response.statusCode} for $url');
       }
 
@@ -142,6 +147,14 @@ class AeroCache {
 
       return data;
     } catch (e) {
+      // Try to serve stale data on error if stale-if-error allows
+      if (e is! AeroCacheException) {
+        final staleData = await _cacheManager.getStaleDataOnError(url);
+        if (staleData != null) {
+          return staleData;
+        }
+      }
+
       if (e is AeroCacheException) {
         rethrow;
       }

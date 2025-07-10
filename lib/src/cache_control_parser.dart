@@ -83,4 +83,25 @@ class CacheControlParser {
 
     return null;
   }
+
+  /// Check if the response has stale-if-error directive
+  static bool hasStaleIfError(HttpHeaders headers) {
+    final cacheControl = headers.value('cache-control');
+    return cacheControl != null && cacheControl.contains('stale-if-error');
+  }
+
+  /// Extract stale-if-error value from Cache-Control header
+  static int? getStaleIfError(HttpHeaders headers) {
+    final cacheControl = headers.value('cache-control');
+    if (cacheControl == null) return null;
+
+    final staleIfErrorMatch = RegExp(
+      r'stale-if-error=(\d+)',
+    ).firstMatch(cacheControl);
+    if (staleIfErrorMatch != null) {
+      return int.tryParse(staleIfErrorMatch.group(1)!);
+    }
+
+    return null;
+  }
 }

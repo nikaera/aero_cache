@@ -358,6 +358,76 @@ void main() {
         expect(needsRevalidation, true);
       },
     );
+
+    test('should store stale-if-error value in MetaInfo', () async {
+      await cacheManager.initialize();
+      const url = 'https://example.com/test.jpg';
+      final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+      final headers = _createMockHeaders({
+        'cache-control': 'max-age=3600, stale-if-error=600',
+      });
+      await cacheManager.saveData(url, testData, headers);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      final meta = await cacheManager.getMeta(url);
+      expect(meta, isNotNull);
+      expect(meta!.staleIfError, 600);
+    });
+
+    test(
+      'should serve stale content on error within stale-if-error window',
+      () async {
+        await cacheManager.initialize();
+        const url = 'https://example.com/test.jpg';
+        final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+        // Create an entry that will be stale but within stale-if-error window
+        final headers = _createMockHeaders({
+          'cache-control': 'max-age=0, stale-if-error=600',
+        });
+        await cacheManager.saveData(url, testData, headers);
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        final meta = await cacheManager.getMeta(url);
+        expect(meta, isNotNull);
+        expect(meta!.isStale, true);
+        expect(meta.canServeStaleOnError, true);
+      },
+    );
+
+    test(
+      'should get stale data on error if revalidation fails',
+      () async {
+        await cacheManager.initialize();
+        const url = 'https://example.com/test.jpg';
+        final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+        final headers = _createMockHeaders({
+          'cache-control': 'max-age=0, stale-if-error=600',
+        });
+        await cacheManager.saveData(url, testData, headers);
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        final staleData = await cacheManager.getStaleDataOnError(url);
+        expect(staleData, isNotNull);
+        expect(staleData, testData);
+      },
+    );
+
+    test(
+      'should identify cache entries that can serve stale on error',
+      () async {
+        await cacheManager.initialize();
+        const url = 'https://example.com/test.jpg';
+        final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+        final headers = _createMockHeaders({
+          'cache-control': 'max-age=0, stale-if-error=600',
+        });
+        await cacheManager.saveData(url, testData, headers);
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        final canServeStaleOnError = await cacheManager.canServeStaleOnError(
+          url,
+        );
+        expect(canServeStaleOnError, true);
+      },
+    );
   });
 }
 

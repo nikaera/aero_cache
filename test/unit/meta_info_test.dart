@@ -60,6 +60,49 @@ void main() {
       expect(metaInfoNull.isStale, false);
     });
 
+    test('should store and retrieve stale-if-error value', () {
+      final metaInfoWithStaleIfError = MetaInfo(
+        url: 'https://example.com/test.jpg',
+        createdAt: DateTime.now(),
+        expiresAt: DateTime.now().add(const Duration(hours: 1)),
+        contentLength: 1024,
+        staleIfError: 600,
+      );
+      expect(metaInfoWithStaleIfError.staleIfError, 600);
+    });
+
+    test(
+      'should serve stale on error within window',
+      () {
+        final pastTime = DateTime.now().subtract(const Duration(minutes: 5));
+        final metaInfoStaleIfError = MetaInfo(
+          url: 'https://example.com/test.jpg',
+          createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+          expiresAt: pastTime,
+          contentLength: 1024,
+          staleIfError: 600, // 10 minutes window
+        );
+        expect(metaInfoStaleIfError.isStale, true);
+        expect(metaInfoStaleIfError.canServeStaleOnError, true);
+      },
+    );
+
+    test(
+      'should not allow serving stale content on error when window expired',
+      () {
+        final pastTime = DateTime.now().subtract(const Duration(hours: 1));
+        final metaInfoStaleIfError = MetaInfo(
+          url: 'https://example.com/test.jpg',
+          createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+          expiresAt: pastTime,
+          contentLength: 1024,
+          staleIfError: 600, // 10 minutes window (expired)
+        );
+        expect(metaInfoStaleIfError.isStale, true);
+        expect(metaInfoStaleIfError.canServeStaleOnError, false);
+      },
+    );
+
     test('should serialize to JSON', () {
       final json = metaInfo.toJson();
       expect(json['url'], 'https://example.com/test.jpg');

@@ -13,6 +13,7 @@ class MetaInfo {
     this.contentType,
     this.requiresRevalidation = false,
     this.staleWhileRevalidate,
+    this.staleIfError,
   });
 
   /// Create MetaInfo from JSON data
@@ -29,6 +30,7 @@ class MetaInfo {
       contentType: json['contentType'] as String?,
       requiresRevalidation: json['requiresRevalidation'] as bool? ?? false,
       staleWhileRevalidate: json['staleWhileRevalidate'] as int?,
+      staleIfError: json['staleIfError'] as int?,
     );
   }
 
@@ -63,6 +65,9 @@ class MetaInfo {
   /// Stale-while-revalidate value in seconds
   final int? staleWhileRevalidate;
 
+  /// Stale-if-error value in seconds
+  final int? staleIfError;
+
   /// Check if the cache is stale (expired)
   bool get isStale => expiresAt != null && DateTime.now().isAfter(expiresAt!);
 
@@ -75,6 +80,17 @@ class MetaInfo {
     final staleExpiry = expiresAt!.add(staleWindow);
     return DateTime.now().isBefore(staleExpiry);
   }
+
+  /// Check if stale content can be served on error
+  bool get canServeStaleOnError {
+    if (!isStale || staleIfError == null || expiresAt == null) {
+      return false;
+    }
+    final staleWindow = Duration(seconds: staleIfError!);
+    final staleExpiry = expiresAt!.add(staleWindow);
+    return DateTime.now().isBefore(staleExpiry);
+  }
+
   /// Check if the cache entry is older than [maxAge] seconds
   bool isOlderThan(int maxAge) =>
       maxAge == 0 || DateTime.now().difference(createdAt).inSeconds > maxAge;
@@ -91,6 +107,7 @@ class MetaInfo {
       'contentType': contentType,
       'requiresRevalidation': requiresRevalidation,
       'staleWhileRevalidate': staleWhileRevalidate,
+      'staleIfError': staleIfError,
     };
   }
 

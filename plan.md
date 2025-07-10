@@ -19,7 +19,12 @@
   - [x] `canServeStale` getter in MetaInfo for determining if stale content can be served
   - [x] `getStaleData()` method in CacheManager for retrieving stale content
   - [x] `needsBackgroundRevalidation()` method for identifying entries requiring revalidation
-- [ ] `stale-if-error` - Use stale response in case of error
+- [x] `stale-if-error` - Use stale response in case of error
+  - [x] Basic parsing and storage of stale-if-error directive
+  - [x] `canServeStaleOnError` getter in MetaInfo for determining if stale content can be served on error
+  - [x] `getStaleDataOnError()` method in CacheManager for retrieving stale content on error
+  - [x] `canServeStaleOnError()` method for identifying entries that can serve stale on error
+  - [x] Error handling in AeroCache to serve stale data when stale-if-error allows
 
 ### Header Handling
 - [ ] `Vary` header support - Handle cache key variation based on request headers
@@ -37,7 +42,7 @@
 - [ ] `only-if-cached` - Only cached responses (prohibit network access)
 
 ### Others
-- [ ] `stale-if-error` - Allow stale response in case of error
+- [x] `stale-if-error` - Allow stale response in case of error
 
 ## Implementation Priority
 
@@ -52,7 +57,7 @@
 10. [x] `max-age` (Request) - Maximum allowed age
 
 ### Low Priority (Special Use Cases)
-14. [ ] `stale-if-error` (Request/Response) - Fallback on error
+14. [x] `stale-if-error` (Request/Response) - Fallback on error
 15. [ ] `max-stale` (Request) - Allow stale response
 16. [ ] `min-fresh` (Request) - Minimum freshness requirement
 17. [ ] `only-if-cached` (Request) - Cache-only mode

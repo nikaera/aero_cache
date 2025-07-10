@@ -107,6 +107,51 @@ void main() {
       final headers = _createMockHeaders({'cache-control': 'max-age=invalid'});
       expect(CacheControlParser.getMaxAge(headers), null);
     });
+
+    test('should detect stale-if-error directive', () {
+      final headers = _createMockHeaders({'cache-control': 'stale-if-error'});
+      expect(CacheControlParser.hasStaleIfError(headers), true);
+    });
+
+    test('should return false for stale-if-error when not present', () {
+      final headers = _createMockHeaders({'cache-control': 'max-age=3600'});
+      expect(CacheControlParser.hasStaleIfError(headers), false);
+    });
+
+    test(
+      'should return false for stale-if-error when no cache-control header',
+      () {
+        final headers = _createMockHeaders({});
+        expect(CacheControlParser.hasStaleIfError(headers), false);
+      },
+    );
+
+    test('should extract stale-if-error value', () {
+      final headers = _createMockHeaders({
+        'cache-control': 'stale-if-error=600',
+      });
+      expect(CacheControlParser.getStaleIfError(headers), 600);
+    });
+
+    test('should return null for stale-if-error when not present', () {
+      final headers = _createMockHeaders({'cache-control': 'no-cache'});
+      expect(CacheControlParser.getStaleIfError(headers), null);
+    });
+
+    test(
+      'should return null for stale-if-error when no cache-control header',
+      () {
+        final headers = _createMockHeaders({});
+        expect(CacheControlParser.getStaleIfError(headers), null);
+      },
+    );
+
+    test('should return null for invalid stale-if-error value', () {
+      final headers = _createMockHeaders({
+        'cache-control': 'stale-if-error=invalid',
+      });
+      expect(CacheControlParser.getStaleIfError(headers), null);
+    });
   });
 }
 

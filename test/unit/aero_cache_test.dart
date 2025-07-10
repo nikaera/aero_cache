@@ -282,6 +282,73 @@ void main() {
         expect(mockHttpClient.requestCount, 2);
       },
     );
+
+    test(
+      'should return stale data on error when stale-if-error allows',
+      () async {
+        await aeroCache.initialize();
+
+        const url = 'https://example.com/stale-if-error-test.jpg';
+        final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+
+        // First request creates stale cache with stale-if-error
+        mockHttpClient.setResponse(url, testData, {
+          'cache-control': 'max-age=0, stale-if-error=600',
+        });
+
+        final result1 = await aeroCache.get(url);
+        expect(result1, testData);
+
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        // 2nd request should fail, but return stale data due to stale-if-error
+        mockHttpClient.setErrorResponse(url, 500);
+        final result2 = await aeroCache.get(url);
+
+        expect(result1, testData);
+        expect(result2, testData);
+        expect(mockHttpClient.requestCount, 2);
+      },
+    );
+
+    test('should throw error when stale-if-error window expired', () async {
+      await aeroCache.initialize();
+
+      const url = 'https://example.com/stale-if-error-expired-test.jpg';
+      final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+
+      // First request creates cache with short stale-if-error window
+      mockHttpClient.setResponse(url, testData, {
+        'cache-control': 'max-age=0, stale-if-error=0',
+      });
+
+      final result1 = await aeroCache.get(url);
+      expect(result1, testData);
+
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      // Second request should throw error since stale-if-error window expired
+      mockHttpClient.setErrorResponse(url, 500);
+
+      expect(
+        () => aeroCache.get(url),
+        throwsA(isA<AeroCacheException>()),
+      );
+    });
+
+    test('should throw error when no stale data available', () async {
+      await aeroCache.initialize();
+
+      const url = 'https://example.com/no-stale-data-test.jpg';
+
+      // No cache exists, should throw error immediately
+      mockHttpClient.setErrorResponse(url, 500);
+
+      expect(
+        () => aeroCache.get(url),
+        throwsA(isA<AeroCacheException>()),
+      );
+    });
   });
 }
 
