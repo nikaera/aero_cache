@@ -155,6 +155,71 @@ void main() {
         throwsA(isA<AeroCacheException>()),
       );
     });
+
+    test('should not cache data with no-store directive', () async {
+      await aeroCache.initialize();
+
+      const url = 'https://example.com/no-store-test.jpg';
+      final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+
+      mockHttpClient.setResponse(url, testData, {
+        'cache-control': 'no-store',
+      });
+
+      final result1 = await aeroCache.get(url);
+      final result2 = await aeroCache.get(url);
+
+      expect(result1, testData);
+      expect(result2, testData);
+      // Should make two requests since no-store prevents caching
+      expect(mockHttpClient.requestCount, 2);
+    });
+
+    test('should force revalidation with no-cache directive', () async {
+      await aeroCache.initialize();
+
+      const url = 'https://example.com/no-cache-test.jpg';
+      final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+
+      // First request with no-cache
+      mockHttpClient.setResponse(url, testData, {
+        'cache-control': 'no-cache, max-age=3600',
+      });
+
+      final result1 = await aeroCache.get(url);
+      
+      // Second request should revalidate even though cache exists
+      mockHttpClient.setNotModifiedResponse(url);
+      final result2 = await aeroCache.get(url);
+
+      expect(result1, testData);
+      expect(result2, testData);
+      // Should make two requests due to no-cache directive
+      expect(mockHttpClient.requestCount, 2);
+    });
+
+    test('should force revalidation for cached items with requiresRevalidation', () async {
+      await aeroCache.initialize();
+
+      const url = 'https://example.com/requires-revalidation-test.jpg';
+      final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+
+      // First request creates cache with requiresRevalidation=true
+      mockHttpClient.setResponse(url, testData, {
+        'cache-control': 'no-cache, max-age=3600',
+      });
+
+      final result1 = await aeroCache.get(url);
+      
+      // Second request should revalidate because requiresRevalidation=true
+      mockHttpClient.setNotModifiedResponse(url);
+      final result2 = await aeroCache.get(url);
+
+      expect(result1, testData);
+      expect(result2, testData);
+      // Should make two requests due to requiresRevalidation
+      expect(mockHttpClient.requestCount, 2);
+    });
   });
 }
 

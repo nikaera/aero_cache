@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:aero_cache/src/cache_control_parser.dart';
 import 'package:aero_cache/src/cache_manager.dart';
 import 'package:aero_cache/src/exceptions.dart';
 import 'package:aero_cache/src/meta_info.dart';
@@ -53,7 +54,8 @@ class AeroCache {
     try {
       final meta = await _cacheManager.getMeta(url);
 
-      if (meta != null && !meta.isStale) {
+      // Check if we can use cached data
+      if (meta != null && !meta.isStale && !meta.requiresRevalidation) {
         return await _cacheManager.getData(url);
       }
 
@@ -109,7 +111,11 @@ class AeroCache {
       }
 
       final data = Uint8List.fromList(chunks.expand((x) => x).toList());
-      await _cacheManager.saveData(url, data, response.headers);
+      
+      // Check if no-store directive prevents caching
+      if (!CacheControlParser.hasNoStore(response.headers)) {
+        await _cacheManager.saveData(url, data, response.headers);
+      }
 
       return data;
     } catch (e) {

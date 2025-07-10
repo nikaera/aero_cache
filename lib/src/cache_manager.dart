@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:aero_cache/src/cache_control_parser.dart';
 import 'package:aero_cache/src/exceptions.dart';
 import 'package:aero_cache/src/meta_info.dart';
 import 'package:crypto/crypto.dart';
@@ -123,6 +124,7 @@ class CacheManager {
         expiresAt: _calculateExpiresAt(headers),
         contentLength: rawData.length,
         contentType: headers.value('content-type'),
+        requiresRevalidation: CacheControlParser.hasNoCache(headers),
       );
       await Future.wait([
         cacheFile.writeAsBytes(dataToWrite),
@@ -148,6 +150,7 @@ class CacheManager {
         expiresAt: _calculateExpiresAt(headers) ?? oldMeta.expiresAt,
         contentLength: oldMeta.contentLength,
         contentType: headers.value('content-type') ?? oldMeta.contentType,
+        requiresRevalidation: CacheControlParser.hasNoCache(headers),
       );
       await metaFile.writeAsString(newMeta.toJsonString());
     } catch (e) {
@@ -156,13 +159,9 @@ class CacheManager {
   }
 
   DateTime? _calculateExpiresAt(HttpHeaders headers) {
-    final cacheControl = headers.value('cache-control');
-    if (cacheControl != null) {
-      final maxAgeMatch = RegExp(r'max-age=(\d+)').firstMatch(cacheControl);
-      if (maxAgeMatch != null) {
-        final maxAge = int.parse(maxAgeMatch.group(1)!);
-        return DateTime.now().add(Duration(seconds: maxAge));
-      }
+    final maxAge = CacheControlParser.getMaxAge(headers);
+    if (maxAge != null) {
+      return DateTime.now().add(Duration(seconds: maxAge));
     }
 
     final expires = headers.value('expires');

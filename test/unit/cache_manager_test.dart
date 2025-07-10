@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:aero_cache/src/cache_control_parser.dart';
 import 'package:aero_cache/src/cache_manager.dart';
 import 'package:aero_cache/src/exceptions.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -167,6 +168,124 @@ void main() {
       expect(validMeta.length, 1);
       expect(validCache.length, 1);
       // 厳密なファイル名チェックは省略（残数で判定）
+    });
+
+    test('should handle no-cache directive requiring revalidation', () async {
+      await cacheManager.initialize();
+      const url = 'https://example.com/no-cache-test.jpg';
+      final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+      final headers = _createMockHeaders({
+        'cache-control': 'no-cache',
+      });
+      await cacheManager.saveData(url, testData, headers);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      final meta = await cacheManager.getMeta(url);
+      expect(meta, isNotNull);
+      expect(meta!.requiresRevalidation, true);
+    });
+
+    test('should not cache data with no-store directive', () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({
+        'cache-control': 'no-store',
+      });
+      final noStore = CacheControlParser.hasNoStore(headers);
+      expect(noStore, true);
+    });
+
+    test('should allow caching when no-store directive is not present',
+        () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({
+        'cache-control': 'max-age=3600',
+      });
+      final noStore = CacheControlParser.hasNoStore(headers);
+      expect(noStore, false);
+    });
+
+    test('should allow caching when no cache-control header is present',
+        () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({});
+      final noStore = CacheControlParser.hasNoStore(headers);
+      expect(noStore, false);
+    });
+
+    test('should identify private directive', () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({
+        'cache-control': 'private',
+      });
+      final isPrivate = CacheControlParser.isPrivate(headers);
+      expect(isPrivate, true);
+    });
+
+    test('should return false for non-private responses', () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({
+        'cache-control': 'public',
+      });
+      final isPrivate = CacheControlParser.isPrivate(headers);
+      expect(isPrivate, false);
+    });
+
+    test('should return false when no cache-control header present', () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({});
+      final isPrivate = CacheControlParser.isPrivate(headers);
+      expect(isPrivate, false);
+    });
+
+    test('should identify public directive', () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({
+        'cache-control': 'public',
+      });
+      final isPublic = CacheControlParser.isPublic(headers);
+      expect(isPublic, true);
+    });
+
+    test('should return false for non-public responses', () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({
+        'cache-control': 'private',
+      });
+      final isPublic = CacheControlParser.isPublic(headers);
+      expect(isPublic, false);
+    });
+
+    test('should return false when no cache-control for public check',
+        () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({});
+      final isPublic = CacheControlParser.isPublic(headers);
+      expect(isPublic, false);
+    });
+
+    test('should identify must-revalidate directive', () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({
+        'cache-control': 'must-revalidate',
+      });
+      final mustRevalidate = CacheControlParser.hasMustRevalidate(headers);
+      expect(mustRevalidate, true);
+    });
+
+    test('should return false for non-must-revalidate responses', () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({
+        'cache-control': 'max-age=3600',
+      });
+      final mustRevalidate = CacheControlParser.hasMustRevalidate(headers);
+      expect(mustRevalidate, false);
+    });
+
+    test('should return false when no cache-control for must-revalidate check',
+        () async {
+      await cacheManager.initialize();
+      final headers = _createMockHeaders({});
+      final mustRevalidate = CacheControlParser.hasMustRevalidate(headers);
+      expect(mustRevalidate, false);
     });
   });
 }

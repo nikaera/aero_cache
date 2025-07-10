@@ -127,5 +127,43 @@ void main() {
       );
       expect(restored.contentLength, metaInfo.contentLength);
     });
+
+    test('should handle requiresRevalidation field', () {
+      final metaWithRevalidation = MetaInfo(
+        url: 'https://example.com/test.jpg',
+        createdAt: DateTime.now(),
+        contentLength: 1024,
+        requiresRevalidation: true,
+      );
+      expect(metaWithRevalidation.requiresRevalidation, true);
+      
+      final json = metaWithRevalidation.toJson();
+      expect(json['requiresRevalidation'], true);
+      
+      final restored = MetaInfo.fromJson(json);
+      expect(restored.requiresRevalidation, true);
+    });
+
+    test('should default requiresRevalidation to false', () {
+      final metaWithoutRevalidation = MetaInfo(
+        url: 'https://example.com/test.jpg',
+        createdAt: DateTime.now(),
+        contentLength: 1024,
+      );
+      expect(metaWithoutRevalidation.requiresRevalidation, false);
+      
+      final json = metaWithoutRevalidation.toJson();
+      expect(json['requiresRevalidation'], false);
+    });
+
+    test('should handle missing requiresRevalidation in JSON', () {
+      final json = {
+        'url': 'https://example.com/test.jpg',
+        'createdAt': DateTime.now().millisecondsSinceEpoch,
+        'contentLength': 1024,
+      };
+      final meta = MetaInfo.fromJson(json);
+      expect(meta.requiresRevalidation, false);
+    });
   });
 }

@@ -11,6 +11,7 @@ class MetaInfo {
     this.lastModified,
     this.expiresAt,
     this.contentType,
+    this.requiresRevalidation = false,
   });
 
   /// Create MetaInfo from JSON data
@@ -25,6 +26,7 @@ class MetaInfo {
           : null,
       contentLength: json['contentLength'] as int,
       contentType: json['contentType'] as String?,
+      requiresRevalidation: json['requiresRevalidation'] as bool? ?? false,
     );
   }
 
@@ -53,6 +55,9 @@ class MetaInfo {
   /// Content-Type value from server
   final String? contentType;
 
+  /// Whether the cache requires revalidation (no-cache directive)
+  final bool requiresRevalidation;
+
   /// Check if the cache is stale (expired)
   bool get isStale => expiresAt != null && DateTime.now().isAfter(expiresAt!);
 
@@ -66,6 +71,7 @@ class MetaInfo {
       'expiresAt': expiresAt?.millisecondsSinceEpoch,
       'contentLength': contentLength,
       'contentType': contentType,
+      'requiresRevalidation': requiresRevalidation,
     };
   }
 
