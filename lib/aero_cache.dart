@@ -54,33 +54,18 @@ class AeroCache {
   Future<Uint8List> get(
     String url, {
     ProgressCallback? onProgress,
-    Map<String, String?>? requestDirectives,
+    bool noCache = false,
+    int? maxAge,
   }) async {
     try {
       final meta = await _cacheManager.getMeta(url);
-
-      // Check for no-cache request directive
-      final hasNoCacheRequest =
-          requestDirectives?.containsKey('no-cache') ?? false;
-
-      // Check for max-age request directive
-      var isCacheOlderThanMaxAge = false;
-      if (requestDirectives?.containsKey('max-age') ?? false) {
-        final maxAgeStr = requestDirectives!['max-age'];
-        if (maxAgeStr != null) {
-          final maxAge = int.tryParse(maxAgeStr);
-          if (maxAge != null && meta != null) {
-            final ageSeconds = DateTime.now()
-                .difference(meta.createdAt)
-                .inSeconds;
-            // For max-age=0, always reject cached responses
-            // (force revalidation)
-            isCacheOlderThanMaxAge = maxAge == 0 || ageSeconds > maxAge;
-          }
+      if (meta != null && !noCache) {
+        // Check for max-age request directive
+        if (maxAge != null && !meta.isOlderThan(maxAge)) {
+          // キャッシュがmaxAgeより古い場合は再検証（サーバーへリクエスト）
+          return await _downloadAndCache(url, meta, onProgress);
         }
-      }
 
-      if (meta != null && !hasNoCacheRequest && !isCacheOlderThanMaxAge) {
         // Return stale data and update cache in the background (SWR)
         if (await _cacheManager.needsBackgroundRevalidation(url)) {
           final staleData = await _cacheManager.getStaleData(url);

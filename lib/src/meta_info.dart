@@ -75,6 +75,9 @@ class MetaInfo {
     final staleExpiry = expiresAt!.add(staleWindow);
     return DateTime.now().isBefore(staleExpiry);
   }
+  /// Check if the cache entry is older than [maxAge] seconds
+  bool isOlderThan(int maxAge) =>
+      maxAge == 0 || DateTime.now().difference(createdAt).inSeconds > maxAge;
 
   /// Convert to JSON Map
   Map<String, dynamic> toJson() {

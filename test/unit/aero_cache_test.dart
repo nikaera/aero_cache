@@ -241,7 +241,7 @@ void main() {
       mockHttpClient.setNotModifiedResponse(url);
       final result2 = await aeroCache.get(
         url,
-        requestDirectives: {'no-cache': null},
+        noCache: true,
       );
 
       expect(result1, testData);
@@ -273,7 +273,7 @@ void main() {
         mockHttpClient.setNotModifiedResponse(url);
         final result2 = await aeroCache.get(
           url,
-          requestDirectives: {'max-age': '0'},
+          maxAge: 10, // Force revalidation
         );
 
         expect(result1, testData);
