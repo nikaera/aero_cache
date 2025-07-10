@@ -58,9 +58,19 @@ class AeroCache {
     int? maxAge,
     int? maxStale,
     int? minFresh,
+    bool onlyIfCached = false,
   }) async {
     try {
       final meta = await _cacheManager.getMeta(url);
+
+      // Handle only-if-cached directive
+      if (onlyIfCached) {
+        if (meta == null) {
+          throw AeroCacheException('No cached response available for $url');
+        }
+        return await _cacheManager.getData(url);
+      }
+
       if (meta != null && !noCache) {
         // Check for max-age request directive
         if (maxAge != null && !meta.isOlderThan(maxAge)) {
@@ -70,7 +80,7 @@ class AeroCache {
 
         // min-fresh requirement check
         if (minFresh != null && !meta.hasMinimumFreshness(minFresh)) {
-          // Cache doesn't meet minimum freshness requirement, need fresh response
+            // Not fresh enough, must fetch new data
           return await _downloadAndCache(url, meta, onProgress);
         }
 

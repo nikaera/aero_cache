@@ -396,7 +396,7 @@ void main() {
       // Wait 3 seconds (cache is still fresh but has only 2 seconds left)
       await Future<void>.delayed(const Duration(seconds: 3));
 
-      // Request with min-fresh=3 should require fresh cache for at least 3 more seconds
+      // Request with min-fresh=3 requires cache to be fresh for 3+ seconds
       // Since cache only has 2 seconds left, should make new request
       mockHttpClient.setResponse(url, testData, {
         'cache-control': 'max-age=10',
@@ -408,9 +408,40 @@ void main() {
       );
 
       expect(result2, testData);
-      // Should make two requests since cached content doesn't meet min-fresh requirement
+      // Should make two requests since cache doesn't meet min-fresh requirement
       expect(mockHttpClient.requestCount, 2);
     });
+
+    test(
+      'should return only cached content with only-if-cached directive',
+      () async {
+        await aeroCache.initialize();
+
+        final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+        const url = 'https://example.com/only-if-cached-test.jpg';
+
+        // First request to populate cache
+        mockHttpClient.setResponse(url, testData, {
+          'cache-control': 'max-age=10',
+        });
+
+        final result1 = await aeroCache.get(url);
+        expect(result1, testData);
+        expect(mockHttpClient.requestCount, 1);
+
+        // Second request with only-if-cached should return cached content
+        final result2 = await aeroCache.get(url, onlyIfCached: true);
+        expect(result2, testData);
+        expect(mockHttpClient.requestCount, 1); // No new network request
+
+        // Third request with only-if-cached when no cache should fail
+        const url2 = 'https://example.com/no-cache-available.jpg';
+        expect(
+          () => aeroCache.get(url2, onlyIfCached: true),
+          throwsA(isA<AeroCacheException>()),
+        );
+      },
+    );
   });
 }
 

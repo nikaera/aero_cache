@@ -98,11 +98,11 @@ class MetaInfo {
   /// Determines whether the current object is within the allowed stale period.
   ///
   /// Returns `true` if the object is considered stale (`isStale` is `true`)
-  /// and the time elapsed since `expiresAt` is less than or equal to [maxStale] seconds.
+  /// and elapsed time since `expiresAt` is ≤ [maxStale] seconds.
   /// Returns `false` if the object is not stale, `expiresAt` is `null`,
   /// or the elapsed time exceeds [maxStale].
   ///
-  /// [maxStale] The maximum number of seconds allowed for the object to be considered within the stale period.
+  /// [maxStale]: max seconds after expiry to consider within stale period.
   bool isWithinStalePeriod(int maxStale) {
     if (isStale) {
       if (expiresAt != null) {
