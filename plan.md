@@ -15,7 +15,6 @@
 
 ### Content Transformation/Optimization
 - [ ] `no-transform` - Prohibits content transformation by intermediaries
-- [ ] `immutable` - Absolutely unchanged while fresh
 
 ### Advanced Caching Strategies
 - [x] `stale-while-revalidate` - Serve stale data while revalidating in the background
@@ -53,8 +52,7 @@
 
 ### Medium Priority (Advanced Caching Strategies)
 7. [x] `stale-while-revalidate` (Response) - Background revalidation
-8. [ ] `immutable` (Response) - Immutable content
-9. [ ] `no-cache` (Request) - Force revalidation request
+9. [x] `no-cache` (Request) - Force revalidation request
 10. [ ] `max-age` (Request) - Maximum allowed age
 
 ### Low Priority (Special Use Cases)

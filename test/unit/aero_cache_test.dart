@@ -223,6 +223,29 @@ void main() {
         expect(mockHttpClient.requestCount, 2);
       },
     );
+
+    test('should force revalidation with no-cache request directive', () async {
+      await aeroCache.initialize();
+
+      const url = 'https://example.com/no-cache-request-test.jpg';
+      final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+
+      // First request creates cache
+      mockHttpClient.setResponse(url, testData, {
+        'cache-control': 'max-age=3600',
+      });
+
+      final result1 = await aeroCache.get(url);
+
+      // Second request with no-cache directive should force revalidation
+      mockHttpClient.setNotModifiedResponse(url);
+      final result2 = await aeroCache.get(url, requestDirectives: {'no-cache': null});
+
+      expect(result1, testData);
+      expect(result2, testData);
+      // Should make two requests due to no-cache request directive
+      expect(mockHttpClient.requestCount, 2);
+    });
   });
 }
 

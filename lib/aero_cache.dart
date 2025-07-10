@@ -51,11 +51,18 @@ class AeroCache {
   }
 
   /// Get data from cache or download if not available/stale
-  Future<Uint8List> get(String url, {ProgressCallback? onProgress}) async {
+  Future<Uint8List> get(
+    String url, {
+    ProgressCallback? onProgress,
+    Map<String, String?>? requestDirectives,
+  }) async {
     try {
       final meta = await _cacheManager.getMeta(url);
 
-      if (meta != null) {
+      // Check for no-cache request directive
+      final hasNoCacheRequest = requestDirectives?.containsKey('no-cache') ?? false;
+
+      if (meta != null && !hasNoCacheRequest) {
         // Return stale data and update cache in the background (SWR)
         if (await _cacheManager.needsBackgroundRevalidation(url)) {
           final staleData = await _cacheManager.getStaleData(url);
