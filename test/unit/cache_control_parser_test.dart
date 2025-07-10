@@ -63,36 +63,6 @@ void main() {
       expect(CacheControlParser.hasNoCache(headers), false);
     });
     
-    test('should detect private directive', () {
-      final headers = _createMockHeaders({'cache-control': 'private'});
-      expect(CacheControlParser.isPrivate(headers), true);
-    });
-    
-    test('should return false for private when not present', () {
-      final headers = _createMockHeaders({'cache-control': 'public'});
-      expect(CacheControlParser.isPrivate(headers), false);
-    });
-    
-    test('should return false for private when no cache-control header', () {
-      final headers = _createMockHeaders({});
-      expect(CacheControlParser.isPrivate(headers), false);
-    });
-    
-    test('should detect public directive', () {
-      final headers = _createMockHeaders({'cache-control': 'public'});
-      expect(CacheControlParser.isPublic(headers), true);
-    });
-    
-    test('should return false for public when not present', () {
-      final headers = _createMockHeaders({'cache-control': 'private'});
-      expect(CacheControlParser.isPublic(headers), false);
-    });
-    
-    test('should return false for public when no cache-control header', () {
-      final headers = _createMockHeaders({});
-      expect(CacheControlParser.isPublic(headers), false);
-    });
-    
     test('should detect must-revalidate directive', () {
       final headers = _createMockHeaders({'cache-control': 'must-revalidate'});
       expect(CacheControlParser.hasMustRevalidate(headers), true);

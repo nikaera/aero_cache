@@ -43,18 +43,6 @@ class CacheControlParser {
     return cacheControl != null && cacheControl.contains('no-cache');
   }
   
-  /// Check if the response is marked as private
-  static bool isPrivate(HttpHeaders headers) {
-    final cacheControl = headers.value('cache-control');
-    return cacheControl != null && cacheControl.contains('private');
-  }
-  
-  /// Check if the response is marked as public
-  static bool isPublic(HttpHeaders headers) {
-    final cacheControl = headers.value('cache-control');
-    return cacheControl != null && cacheControl.contains('public');
-  }
-  
   /// Check if the response must be revalidated when stale
   static bool hasMustRevalidate(HttpHeaders headers) {
     final cacheControl = headers.value('cache-control');

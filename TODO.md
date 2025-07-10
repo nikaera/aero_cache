@@ -7,16 +7,11 @@
 ## Unimplemented Response Directives
 
 ### Basic Caching Controls
-- [ ] `s-maxage` - max-age for shared caches (proxies, CDNs)
 - [ ] `no-cache` - Requires revalidation (can be cached but must be validated before use)
 - [ ] `no-store` - Caching prohibited (both private and shared caches)
-- [ ] `private` - Private cache only (browser local cache only)
-- [ ] `public` - Can be cached by shared caches (even responses with Authorization)
 
 ### Revalidation Controls
 - [ ] `must-revalidate` - Must revalidate when stale
-- [ ] `proxy-revalidate` - Must revalidate for shared caches
-- [ ] `must-understand` - Cache only if status code is understood
 
 ### Content Transformation/Optimization
 - [ ] `no-transform` - Prohibits content transformation by intermediaries
@@ -25,6 +20,9 @@
 ### Advanced Caching Strategies
 - [ ] `stale-while-revalidate` - Serve stale data while revalidating in the background
 - [ ] `stale-if-error` - Use stale response in case of error
+
+### Header Handling
+- [ ] `Vary` header support - Handle cache key variation based on request headers
 
 ## Unimplemented Request Directives
 
@@ -47,20 +45,15 @@
 ### High Priority (Basic HTTP Caching Behavior)
 1. [x] `no-cache` (Response) - Must revalidate caching
 2. [x] `no-store` (Response) - Completely prohibit caching
-3. [x] `private` (Response) - Private cache only
-4. [x] `public` (Response) - Allow shared cache
-5. [x] `must-revalidate` (Response) - Force revalidation when stale
+3. [x] `must-revalidate` (Response) - Force revalidation when stale
 
 ### Medium Priority (Advanced Caching Strategies)
-6. [ ] `s-maxage` (Response) - max-age for shared caches
 7. [ ] `stale-while-revalidate` (Response) - Background revalidation
 8. [ ] `immutable` (Response) - Immutable content
 9. [ ] `no-cache` (Request) - Force revalidation request
 10. [ ] `max-age` (Request) - Maximum allowed age
 
 ### Low Priority (Special Use Cases)
-11. [ ] `proxy-revalidate` (Response) - Revalidation for proxies
-12. [ ] `must-understand` (Response) - Conditional caching
 13. [ ] `no-transform` (Request/Response) - Prohibit content transformation
 14. [ ] `stale-if-error` (Request/Response) - Fallback on error
 15. [ ] `max-stale` (Request) - Allow stale response
@@ -84,6 +77,9 @@
 - [ ] Specify Cache-Control in request options
 - [ ] API to retrieve response directive information
 - [ ] Customizable cache policy feature
+
+### Header Handling
+- [ ] Support for `Vary` header - Cache key calculation and lookup must respect Vary header values
 
 ### Add Tests
 - [ ] Unit tests for each directive

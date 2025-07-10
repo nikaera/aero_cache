@@ -211,57 +211,6 @@ void main() {
       expect(noStore, false);
     });
 
-    test('should identify private directive', () async {
-      await cacheManager.initialize();
-      final headers = _createMockHeaders({
-        'cache-control': 'private',
-      });
-      final isPrivate = CacheControlParser.isPrivate(headers);
-      expect(isPrivate, true);
-    });
-
-    test('should return false for non-private responses', () async {
-      await cacheManager.initialize();
-      final headers = _createMockHeaders({
-        'cache-control': 'public',
-      });
-      final isPrivate = CacheControlParser.isPrivate(headers);
-      expect(isPrivate, false);
-    });
-
-    test('should return false when no cache-control header present', () async {
-      await cacheManager.initialize();
-      final headers = _createMockHeaders({});
-      final isPrivate = CacheControlParser.isPrivate(headers);
-      expect(isPrivate, false);
-    });
-
-    test('should identify public directive', () async {
-      await cacheManager.initialize();
-      final headers = _createMockHeaders({
-        'cache-control': 'public',
-      });
-      final isPublic = CacheControlParser.isPublic(headers);
-      expect(isPublic, true);
-    });
-
-    test('should return false for non-public responses', () async {
-      await cacheManager.initialize();
-      final headers = _createMockHeaders({
-        'cache-control': 'private',
-      });
-      final isPublic = CacheControlParser.isPublic(headers);
-      expect(isPublic, false);
-    });
-
-    test('should return false when no cache-control for public check',
-        () async {
-      await cacheManager.initialize();
-      final headers = _createMockHeaders({});
-      final isPublic = CacheControlParser.isPublic(headers);
-      expect(isPublic, false);
-    });
-
     test('should identify must-revalidate directive', () async {
       await cacheManager.initialize();
       final headers = _createMockHeaders({
