@@ -19,7 +19,6 @@ platforms:
 
 topics:
   - caching
-  - downloader
   - compression
   - image
   - video
