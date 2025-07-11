@@ -12,6 +12,7 @@ A high-performance caching library for Dart/Flutter with zstd compression and ET
 - **High Performance**: Efficient caching with zstd compression for optimal storage
 - **ETag Support**: Automatic cache revalidation using ETag headers
 - **Last-Modified Support**: Fallback cache validation using Last-Modified headers
+- **Vary Header Support**: Intelligent cache key generation based on Vary header specifications
 - **Progress Tracking**: Real-time download progress callbacks
 - **Automatic Cleanup**: Built-in expired cache cleanup
 - **Flexible Configuration**: Customizable cache directory and compression settings
@@ -95,6 +96,45 @@ void main() async {
   await cache.clearAllCache();
   
   cache.dispose();
+}
+```
+
+### Vary Header Handling
+
+```dart
+import 'package:aero_cache/aero_cache.dart';
+import 'dart:io';
+
+void main() async {
+  final cache = AeroCache();
+  await cache.initialize();
+  
+  // Create custom HTTP client with specific headers
+  final client = HttpClient();
+  final customCache = AeroCache(httpClient: client);
+  await customCache.initialize();
+  
+  // First request with English accept-language
+  client.userAgent = 'MyApp/1.0';
+  final request1 = await client.getUrl(Uri.parse('https://api.example.com/content'));
+  request1.headers.set('Accept-Language', 'en-US');
+  request1.headers.set('Accept-Encoding', 'gzip');
+  
+  // AeroCache will automatically handle Vary header from response
+  // and create cache key based on specified headers
+  final data1 = await customCache.get('https://api.example.com/content');
+  
+  // Second request with different accept-language
+  final request2 = await client.getUrl(Uri.parse('https://api.example.com/content'));
+  request2.headers.set('Accept-Language', 'ja-JP');
+  request2.headers.set('Accept-Encoding', 'gzip');
+  
+  // This will create a separate cache entry due to different Accept-Language
+  // if the server's response includes "Vary: Accept-Language"
+  final data2 = await customCache.get('https://api.example.com/content');
+  
+  client.close();
+  customCache.dispose();
 }
 ```
 
@@ -209,6 +249,17 @@ AeroCache uses zstd compression by default, which provides:
 - Low memory usage
 
 Benchmarks show significant storage savings compared to uncompressed caching, especially for text-based content like JSON and HTML.
+
+## Vary Header Support
+
+AeroCache intelligently handles the `Vary` header to ensure correct cache behavior when responses depend on request headers. When a server includes a `Vary` header in its response, AeroCache automatically:
+
+- Parses the `Vary` header to identify which request headers affect the response
+- Incorporates relevant request header values into the cache key calculation
+- Ensures cache hits only occur when the specified request headers match exactly
+- Supports common headers like `Accept-Encoding`, `User-Agent`, `Accept-Language`, etc.
+
+This ensures that cached responses are served only when appropriate, preventing issues like serving compressed content to clients that don't support compression.
 
 ## Contributing
 

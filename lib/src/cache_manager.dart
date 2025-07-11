@@ -78,9 +78,37 @@ class CacheManager {
     try {
       final compressedData = await _fileManager.readCacheData(url);
       return await _compression.decompress(compressedData);
-    } catch (e) {
-      throw AeroCacheException('Failed to read cache data for $url', e);
+    } on Exception catch (e) {
+      return _handleError('read cache data', url, e);
     }
+  }
+
+  /// Create MetaInfo from headers
+  MetaInfo _createMetaInfo(
+    String url,
+    int contentLength,
+    HttpHeaders headers,
+    List<String> varyHeaders,
+  ) {
+    return MetaInfo(
+      url: url,
+      etag: headers.value('etag'),
+      lastModified: headers.value('last-modified'),
+      createdAt: DateTime.now(),
+      expiresAt: CacheExpirationCalculator.calculateExpiresAt(
+        headers,
+        defaultCacheDuration,
+      ),
+      contentLength: contentLength,
+      contentType: headers.value('content-type'),
+      requiresRevalidation: CacheControlParser.hasNoCache(headers),
+      staleWhileRevalidate: CacheControlParser.getStaleWhileRevalidate(
+        headers,
+      ),
+      staleIfError: CacheControlParser.getStaleIfError(headers),
+      mustRevalidate: CacheControlParser.hasMustRevalidate(headers),
+      varyHeaders: varyHeaders.isNotEmpty ? varyHeaders : null,
+    );
   }
 
   /// Save data to cache with compression
@@ -91,39 +119,44 @@ class CacheManager {
   ) async {
     try {
       final dataToWrite = await _compression.compress(rawData);
-
-      debugPrint(
-        'Saving cache for $url, '
-        'compressionRatio: ${dataToWrite.length / rawData.length}',
-      );
+      _logCompressionRatio(url, dataToWrite.length, rawData.length);
 
       final varyHeaders = CacheControlParser.getVaryHeaders(headers);
-      final metaInfo = MetaInfo(
-        url: url,
-        etag: headers.value('etag'),
-        lastModified: headers.value('last-modified'),
-        createdAt: DateTime.now(),
-        expiresAt: CacheExpirationCalculator.calculateExpiresAt(
-          headers,
-          defaultCacheDuration,
-        ),
-        contentLength: rawData.length,
-        contentType: headers.value('content-type'),
-        requiresRevalidation: CacheControlParser.hasNoCache(headers),
-        staleWhileRevalidate: CacheControlParser.getStaleWhileRevalidate(
-          headers,
-        ),
-        staleIfError: CacheControlParser.getStaleIfError(headers),
-        mustRevalidate: CacheControlParser.hasMustRevalidate(headers),
-        varyHeaders: varyHeaders.isNotEmpty ? varyHeaders : null,
+      final metaInfo = _createMetaInfo(
+        url,
+        rawData.length,
+        headers,
+        varyHeaders,
       );
 
       await Future.wait([
         _fileManager.writeCacheData(url, dataToWrite),
         _fileManager.writeMeta(url, metaInfo),
       ]);
-    } catch (e) {
-      throw AeroCacheException('Failed to save cache data for $url', e);
+    } on Exception catch (e) {
+      return _handleError('save cache data', url, e);
+    }
+  }
+
+  /// Log compression ratio for debugging
+  void _logCompressionRatio(String url, int compressedSize, int originalSize) {
+    debugPrint(
+      'Saving cache for $url, '
+      'compressionRatio: ${compressedSize / originalSize}',
+    );
+  }
+
+  /// Handle errors consistently with proper exception wrapping
+  T _handleError<T>(String operation, String url, Exception error) {
+    throw AeroCacheException('Failed to $operation for $url', error);
+  }
+
+  /// Safe execution wrapper for cache operations
+  Future<T?> _safeExecute<T>(Future<T> Function() operation) async {
+    try {
+      return await operation();
+    } on Exception catch (_) {
+      return null;
     }
   }
 
@@ -156,8 +189,8 @@ class CacheManager {
       );
 
       await _fileManager.writeMeta(url, newMeta);
-    } catch (e) {
-      throw AeroCacheException('Failed to update meta for $url', e);
+    } on Exception catch (e) {
+      return _handleError('update meta', url, e);
     }
   }
 
@@ -231,30 +264,15 @@ class CacheManager {
     try {
       final dataToWrite = await _compression.compress(rawData);
       final varyHeaders = CacheControlParser.getVaryHeaders(headers);
+      
+      debugPrint('Saving Vary-aware cache for $url');
+      _logCompressionRatio(url, dataToWrite.length, rawData.length);
 
-      debugPrint(
-        'Saving Vary-aware cache for $url, '
-        'compressionRatio: ${dataToWrite.length / rawData.length}',
-      );
-
-      final metaInfo = MetaInfo(
-        url: url,
-        etag: headers.value('etag'),
-        lastModified: headers.value('last-modified'),
-        createdAt: DateTime.now(),
-        expiresAt: CacheExpirationCalculator.calculateExpiresAt(
-          headers,
-          defaultCacheDuration,
-        ),
-        contentLength: rawData.length,
-        contentType: headers.value('content-type'),
-        requiresRevalidation: CacheControlParser.hasNoCache(headers),
-        staleWhileRevalidate: CacheControlParser.getStaleWhileRevalidate(
-          headers,
-        ),
-        staleIfError: CacheControlParser.getStaleIfError(headers),
-        mustRevalidate: CacheControlParser.hasMustRevalidate(headers),
-        varyHeaders: varyHeaders.isNotEmpty ? varyHeaders : null,
+      final metaInfo = _createMetaInfo(
+        url,
+        rawData.length,
+        headers,
+        varyHeaders,
       );
 
       await Future.wait([
@@ -273,8 +291,8 @@ class CacheManager {
           varyHeaders,
         ),
       ]);
-    } catch (e) {
-      throw AeroCacheException('Failed to save cache data for $url', e);
+    } on Exception catch (e) {
+      return _handleError('save cache data', url, e);
     }
   }
 
@@ -297,8 +315,8 @@ class CacheManager {
         requestHeaders,
       );
       return await _compression.decompress(compressedData);
-    } catch (e) {
-      throw AeroCacheException('Failed to read cache data for $url', e);
+    } on Exception catch (e) {
+      return _handleError('read cache data', url, e);
     }
   }
 }
