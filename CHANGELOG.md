@@ -1,6 +1,6 @@
-## 0.0.1
+## 1.0.0
 
-### Initial Release
+### Initial Release 🎉
 
 - **Core Features**
   - High-performance caching for Dart/Flutter with zstd compression
