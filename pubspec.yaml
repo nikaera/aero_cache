@@ -20,8 +20,6 @@ platforms:
 topics:
   - caching
   - compression
-  - image
-  - video
   - media
   - http
   - performance
