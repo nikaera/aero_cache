@@ -488,6 +488,126 @@ void main() {
         expect(meta, isNull);
       },
     );
+
+    test(
+      'should cache hit when request headers match Vary requirements',
+      () async {
+        await cacheManager.initialize();
+
+        const url = 'https://example.com/api/content';
+        final data = Uint8List.fromList([10, 20, 30]);
+        final headers = _createMockHeaders({
+          'content-type': 'application/json',
+          'vary': 'Accept, User-Agent',
+          'cache-control': 'max-age=3600',
+        });
+
+        final requestHeaders = {
+          'accept': 'application/json',
+          'user-agent': 'TestClient/1.0',
+          'authorization': 'Bearer token123',
+        };
+
+        await cacheManager.saveDataWithRequestHeaders(
+          url,
+          data,
+          headers,
+          requestHeaders,
+        );
+
+        final cachedMeta = await cacheManager.getMetaWithRequestHeaders(
+          url,
+          requestHeaders,
+        );
+        expect(cachedMeta, isNotNull);
+        expect(cachedMeta!.isStale, false);
+
+        final cachedData = await cacheManager.getDataWithRequestHeaders(
+          url,
+          requestHeaders,
+        );
+        expect(cachedData, data);
+      },
+    );
+
+    test('should cache miss when Vary header values differ', () async {
+      await cacheManager.initialize();
+
+      const url = 'https://example.com/api/content';
+      final data = Uint8List.fromList([10, 20, 30]);
+      final headers = _createMockHeaders({
+        'content-type': 'application/json',
+        'vary': 'Accept, User-Agent',
+        'cache-control': 'max-age=3600',
+      });
+
+      final originalRequestHeaders = {
+        'accept': 'application/json',
+        'user-agent': 'TestClient/1.0',
+      };
+
+      final differentRequestHeaders = {
+        'accept': 'application/xml',
+        'user-agent': 'TestClient/1.0',
+      };
+
+      await cacheManager.saveDataWithRequestHeaders(
+        url,
+        data,
+        headers,
+        originalRequestHeaders,
+      );
+
+      final cachedMeta = await cacheManager.getMetaWithRequestHeaders(
+        url,
+        differentRequestHeaders,
+      );
+      expect(cachedMeta, isNull);
+    });
+
+    test(
+      'should handle multiple cache entries for same URL with different Vary values',
+      () async {
+        await cacheManager.initialize();
+
+        const url = 'https://example.com/api/content';
+        final jsonData = Uint8List.fromList([1, 2, 3]);
+        final xmlData = Uint8List.fromList([4, 5, 6]);
+
+        final headers = _createMockHeaders({
+          'vary': 'Accept',
+          'cache-control': 'max-age=3600',
+        });
+
+        final jsonRequestHeaders = {'accept': 'application/json'};
+        final xmlRequestHeaders = {'accept': 'application/xml'};
+
+        await cacheManager.saveDataWithRequestHeaders(
+          url,
+          jsonData,
+          headers,
+          jsonRequestHeaders,
+        );
+        await cacheManager.saveDataWithRequestHeaders(
+          url,
+          xmlData,
+          headers,
+          xmlRequestHeaders,
+        );
+
+        final jsonCachedData = await cacheManager.getDataWithRequestHeaders(
+          url,
+          jsonRequestHeaders,
+        );
+        final xmlCachedData = await cacheManager.getDataWithRequestHeaders(
+          url,
+          xmlRequestHeaders,
+        );
+
+        expect(jsonCachedData, jsonData);
+        expect(xmlCachedData, xmlData);
+      },
+    );
   });
 }
 
