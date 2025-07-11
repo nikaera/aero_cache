@@ -7,9 +7,9 @@ class CacheConfig {
     this.cacheDirPath,
     this.defaultCacheDuration = const Duration(days: 5),
   }) : assert(
-         compressionLevel >= 1 && compressionLevel <= 22,
-         'Compression level must be between 1 and 22',
-       );
+          compressionLevel >= 1 && compressionLevel <= 22,
+          'Compression level must be between 1 and 22',
+        );
 
   /// Whether compression is disabled
   final bool disableCompression;

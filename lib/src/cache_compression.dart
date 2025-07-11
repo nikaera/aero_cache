@@ -10,9 +10,9 @@ class CacheCompression {
     this.disableCompression = false,
     this.compressionLevel = 3,
   }) : assert(
-         compressionLevel >= 1 && compressionLevel <= 22,
-         'Compression level must be between 1 and 22',
-       );
+          compressionLevel >= 1 && compressionLevel <= 22,
+          'Compression level must be between 1 and 22',
+        );
 
   /// Zstandard compression instance
   late final Zstandard _zstandard;

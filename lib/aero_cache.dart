@@ -30,13 +30,13 @@ class AeroCache {
     int compressionLevel = 3,
     Duration defaultCacheDuration = const Duration(days: 5),
     String? cacheDirPath,
-  }) : _cacheManager = CacheManager(
-         disableCompression: disableCompression,
-         compressionLevel: compressionLevel,
-         defaultCacheDuration: defaultCacheDuration,
-         cacheDirPath: cacheDirPath,
-       ),
-       _httpClient = httpClient ?? HttpClient();
+  })  : _cacheManager = CacheManager(
+          disableCompression: disableCompression,
+          compressionLevel: compressionLevel,
+          defaultCacheDuration: defaultCacheDuration,
+          cacheDirPath: cacheDirPath,
+        ),
+        _httpClient = httpClient ?? HttpClient();
 
   /// Internal cache manager instance
   final CacheManager _cacheManager;

@@ -18,9 +18,9 @@ class CacheManager {
     this.cacheDirPath,
     this.defaultCacheDuration = const Duration(days: 5),
   }) : assert(
-         compressionLevel >= 1 && compressionLevel <= 22,
-         'Compression level must be between 1 and 22',
-       );
+          compressionLevel >= 1 && compressionLevel <= 22,
+          'Compression level must be between 1 and 22',
+        );
 
   /// Cache directory instance
   late final Directory _cacheDirectory;
@@ -152,8 +152,7 @@ class CacheManager {
         etag: headers.value('etag') ?? oldMeta.etag,
         lastModified: headers.value('last-modified') ?? oldMeta.lastModified,
         createdAt: oldMeta.createdAt,
-        expiresAt:
-            CacheExpirationCalculator.calculateExpiresAt(
+        expiresAt: CacheExpirationCalculator.calculateExpiresAt(
               headers,
               defaultCacheDuration,
             ) ??
@@ -163,7 +162,7 @@ class CacheManager {
         requiresRevalidation: CacheControlParser.hasNoCache(headers),
         staleWhileRevalidate:
             CacheControlParser.getStaleWhileRevalidate(headers) ??
-            oldMeta.staleWhileRevalidate,
+                oldMeta.staleWhileRevalidate,
         staleIfError:
             CacheControlParser.getStaleIfError(headers) ?? oldMeta.staleIfError,
         mustRevalidate: CacheControlParser.hasMustRevalidate(headers),

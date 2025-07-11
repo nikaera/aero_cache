@@ -158,12 +158,10 @@ void main() {
       await cacheManager.clearExpiredCache();
       final afterFiles = await cacheDir.list().toList();
       // url2(有効)のファイルは残る
-      final validMeta = afterFiles
-          .where((f) => f.path.endsWith('.meta'))
-          .toList();
-      final validCache = afterFiles
-          .where((f) => f.path.endsWith('.cache'))
-          .toList();
+      final validMeta =
+          afterFiles.where((f) => f.path.endsWith('.meta')).toList();
+      final validCache =
+          afterFiles.where((f) => f.path.endsWith('.cache')).toList();
       expect(validMeta.length, 1);
       expect(validCache.length, 1);
       // 厳密なファイル名チェックは省略（残数で判定）
@@ -352,8 +350,8 @@ void main() {
         await cacheManager.saveData(url, testData, headers);
         await Future<void>.delayed(const Duration(milliseconds: 100));
 
-        final needsRevalidation = await cacheManager
-            .needsBackgroundRevalidation(url);
+        final needsRevalidation =
+            await cacheManager.needsBackgroundRevalidation(url);
         expect(needsRevalidation, true);
       },
     );
