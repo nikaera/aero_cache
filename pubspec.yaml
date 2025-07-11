@@ -20,7 +20,7 @@ dependencies:
   zstandard: ^1.0.0
 
 dev_dependencies:
-  flutter_lints: ^5.0.0
+  flutter_lints: ">=5.0.0 <7.0.0"
   flutter_test:
     sdk: flutter
   path_provider_platform_interface: ^2.1.2
