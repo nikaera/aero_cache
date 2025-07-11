@@ -5,7 +5,7 @@
 [![pub package](https://img.shields.io/pub/v/aero_cache.svg)](https://pub.dev/packages/aero_cache)
 [![style: very good analysis](https://img.shields.io/badge/style-very_good_analysis-B22C89.svg)](https://pub.dev/packages/very_good_analysis)
 
-A high-performance caching library for Dart/Flutter with zstd compression and ETag-based cache revalidation.
+A high-performance HTTP caching library for Dart/Flutter with zstd compression, ETag/Last-Modified revalidation, and full Cache-Control directive support.
 
 ## Features
 

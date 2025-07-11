@@ -1,5 +1,5 @@
 name: aero_cache
-description: "A high-performance caching library for Dart/Flutter with zstd compression and ETag-based cache revalidation."
+description: "A high-performance HTTP caching library for Dart/Flutter with zstd compression, ETag/Last-Modified revalidation, and full Cache-Control directive support."
 version: 0.0.1
 homepage:
 
