@@ -97,6 +97,7 @@ class CacheManager {
         'compressionRatio: ${dataToWrite.length / rawData.length}',
       );
 
+      final varyHeaders = CacheControlParser.getVaryHeaders(headers);
       final metaInfo = MetaInfo(
         url: url,
         etag: headers.value('etag'),
@@ -114,6 +115,7 @@ class CacheManager {
         ),
         staleIfError: CacheControlParser.getStaleIfError(headers),
         mustRevalidate: CacheControlParser.hasMustRevalidate(headers),
+        varyHeaders: varyHeaders.isNotEmpty ? varyHeaders : null,
       );
 
       await Future.wait([
@@ -216,6 +218,87 @@ class CacheManager {
       return meta.canServeStaleOnError;
     } on Exception catch (_) {
       return false;
+    }
+  }
+
+  /// Save data to cache with Vary-aware key generation
+  Future<void> saveDataWithRequestHeaders(
+    String url,
+    Uint8List rawData,
+    HttpHeaders headers,
+    Map<String, String> requestHeaders,
+  ) async {
+    try {
+      final dataToWrite = await _compression.compress(rawData);
+      final varyHeaders = CacheControlParser.getVaryHeaders(headers);
+
+      debugPrint(
+        'Saving Vary-aware cache for $url, '
+        'compressionRatio: ${dataToWrite.length / rawData.length}',
+      );
+
+      final metaInfo = MetaInfo(
+        url: url,
+        etag: headers.value('etag'),
+        lastModified: headers.value('last-modified'),
+        createdAt: DateTime.now(),
+        expiresAt: CacheExpirationCalculator.calculateExpiresAt(
+          headers,
+          defaultCacheDuration,
+        ),
+        contentLength: rawData.length,
+        contentType: headers.value('content-type'),
+        requiresRevalidation: CacheControlParser.hasNoCache(headers),
+        staleWhileRevalidate: CacheControlParser.getStaleWhileRevalidate(
+          headers,
+        ),
+        staleIfError: CacheControlParser.getStaleIfError(headers),
+        mustRevalidate: CacheControlParser.hasMustRevalidate(headers),
+        varyHeaders: varyHeaders.isNotEmpty ? varyHeaders : null,
+      );
+
+      await Future.wait([
+        _fileManager.writeCacheData(url, dataToWrite),
+        _fileManager.writeMeta(url, metaInfo),
+        _fileManager.writeCacheDataWithRequestHeaders(
+          url,
+          dataToWrite,
+          requestHeaders,
+          varyHeaders,
+        ),
+        _fileManager.writeMetaWithRequestHeaders(
+          url,
+          metaInfo,
+          requestHeaders,
+          varyHeaders,
+        ),
+      ]);
+    } catch (e) {
+      throw AeroCacheException('Failed to save cache data for $url', e);
+    }
+  }
+
+  /// Get metadata with Vary-aware lookup
+  Future<MetaInfo?> getMetaWithRequestHeaders(
+    String url,
+    Map<String, String> requestHeaders,
+  ) async {
+    return _fileManager.readMetaWithRequestHeaders(url, requestHeaders);
+  }
+
+  /// Get cached data with Vary-aware lookup
+  Future<Uint8List> getDataWithRequestHeaders(
+    String url,
+    Map<String, String> requestHeaders,
+  ) async {
+    try {
+      final compressedData = await _fileManager.readCacheDataWithRequestHeaders(
+        url,
+        requestHeaders,
+      );
+      return await _compression.decompress(compressedData);
+    } catch (e) {
+      throw AeroCacheException('Failed to read cache data for $url', e);
     }
   }
 }

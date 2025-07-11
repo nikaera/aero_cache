@@ -7,7 +7,7 @@ void main() {
       const url = 'https://example.com/api/data';
       final hash1 = CacheUrlHasher.getUrlHash(url);
       final hash2 = CacheUrlHasher.getUrlHash(url);
-      
+
       expect(hash1, hash2);
       expect(hash1, isNotEmpty);
     });
@@ -17,7 +17,7 @@ void main() {
       const url2 = 'https://example.com/api/other';
       final hash1 = CacheUrlHasher.getUrlHash(url1);
       final hash2 = CacheUrlHasher.getUrlHash(url2);
-      
+
       expect(hash1, isNot(hash2));
     });
 
@@ -29,13 +29,13 @@ void main() {
         'user-agent': 'TestAgent/1.0',
       };
       final varyHeaders = ['Accept', 'Accept-Encoding'];
-      
+
       final hash = CacheUrlHasher.getVaryAwareUrlHash(
         url,
         requestHeaders,
         varyHeaders,
       );
-      
+
       expect(hash, isNotEmpty);
       expect(hash, isNot(CacheUrlHasher.getUrlHash(url)));
     });
@@ -47,7 +47,7 @@ void main() {
         'accept-encoding': 'gzip',
       };
       final varyHeaders = ['Accept', 'Accept-Encoding'];
-      
+
       final hash1 = CacheUrlHasher.getVaryAwareUrlHash(
         url,
         requestHeaders,
@@ -58,7 +58,7 @@ void main() {
         requestHeaders,
         varyHeaders,
       );
-      
+
       expect(hash1, hash2);
     });
 
@@ -73,7 +73,7 @@ void main() {
         'accept-encoding': 'gzip',
       };
       final varyHeaders = ['Accept', 'Accept-Encoding'];
-      
+
       final hash1 = CacheUrlHasher.getVaryAwareUrlHash(
         url,
         requestHeaders1,
@@ -84,7 +84,7 @@ void main() {
         requestHeaders2,
         varyHeaders,
       );
-      
+
       expect(hash1, isNot(hash2));
     });
 
@@ -101,7 +101,7 @@ void main() {
         'cookie': 'session=xyz789',
       };
       final varyHeaders = ['Accept', 'User-Agent'];
-      
+
       final hash1 = CacheUrlHasher.getVaryAwareUrlHash(
         url,
         requestHeaders1,
@@ -112,7 +112,7 @@ void main() {
         requestHeaders2,
         varyHeaders,
       );
-      
+
       expect(hash1, hash2);
     });
   });

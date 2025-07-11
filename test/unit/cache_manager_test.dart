@@ -428,6 +428,66 @@ void main() {
         expect(canServeStaleOnError, true);
       },
     );
+
+    test('should store and retrieve data with Vary headers', () async {
+      await cacheManager.initialize();
+
+      const url = 'https://example.com/vary-test.jpg';
+      final data = Uint8List.fromList([1, 2, 3, 4, 5]);
+      final headers = _createMockHeaders({
+        'content-type': 'image/jpeg',
+        'vary': 'Accept, Accept-Encoding',
+      });
+
+      await cacheManager.saveDataWithRequestHeaders(
+        url,
+        data,
+        headers,
+        {'accept': 'image/jpeg', 'accept-encoding': 'gzip'},
+      );
+
+      final meta = await cacheManager.getMetaWithRequestHeaders(
+        url,
+        {'accept': 'image/jpeg', 'accept-encoding': 'gzip'},
+      );
+      expect(meta, isNotNull);
+      expect(meta!.varyHeaders, ['Accept', 'Accept-Encoding']);
+
+      final retrievedData = await cacheManager.getDataWithRequestHeaders(
+        url,
+        {'accept': 'image/jpeg', 'accept-encoding': 'gzip'},
+      );
+      expect(retrievedData, data);
+    });
+
+    test(
+      'should return null for Vary cache miss with different headers',
+      () async {
+        await cacheManager.initialize();
+
+        const url = 'https://example.com/vary-test.jpg';
+        final data = Uint8List.fromList([1, 2, 3, 4, 5]);
+        final headers = _createMockHeaders({
+          'content-type': 'image/jpeg',
+          'vary': 'Accept, Accept-Encoding',
+        });
+
+        // Store with one set of headers
+        await cacheManager.saveDataWithRequestHeaders(
+          url,
+          data,
+          headers,
+          {'accept': 'image/jpeg', 'accept-encoding': 'gzip'},
+        );
+
+        // Try to retrieve with different headers
+        final meta = await cacheManager.getMetaWithRequestHeaders(
+          url,
+          {'accept': 'text/html', 'accept-encoding': 'gzip'},
+        );
+        expect(meta, isNull);
+      },
+    );
   });
 }
 

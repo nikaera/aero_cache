@@ -19,13 +19,13 @@ class CacheUrlHasher {
   ) {
     // Create a string combining URL and relevant headers
     final buffer = StringBuffer(url);
-    
+
     // Sort vary headers for consistent ordering
     final sortedVaryHeaders = List<String>.from(varyHeaders)..sort();
-    
+
     for (final varyHeader in sortedVaryHeaders) {
       final lowerVaryHeader = varyHeader.toLowerCase();
-      
+
       // Find matching request header (case-insensitive)
       for (final requestHeader in requestHeaders.keys) {
         if (requestHeader.toLowerCase() == lowerVaryHeader) {
@@ -34,7 +34,7 @@ class CacheUrlHasher {
         }
       }
     }
-    
+
     final bytes = utf8.encode(buffer.toString());
     final digest = sha256.convert(bytes);
     return digest.toString();

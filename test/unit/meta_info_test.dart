@@ -247,5 +247,52 @@ void main() {
         false,
       ); // must-revalidate overrides stale-if-error
     });
+
+    test('should store and retrieve Vary header values', () {
+      final varyHeaders = ['Accept', 'Accept-Encoding', 'User-Agent'];
+      final metaWithVary = MetaInfo(
+        url: 'https://example.com/test.jpg',
+        createdAt: DateTime.now(),
+        contentLength: 1024,
+        varyHeaders: varyHeaders,
+      );
+
+      expect(metaWithVary.varyHeaders, varyHeaders);
+    });
+
+    test('should handle null Vary header values', () {
+      final metaWithoutVary = MetaInfo(
+        url: 'https://example.com/test.jpg',
+        createdAt: DateTime.now(),
+        contentLength: 1024,
+      );
+
+      expect(metaWithoutVary.varyHeaders, isNull);
+    });
+
+    test('should serialize and deserialize Vary header values', () {
+      final varyHeaders = ['Accept', 'Accept-Encoding', 'User-Agent'];
+      final originalMeta = MetaInfo(
+        url: 'https://example.com/test.jpg',
+        createdAt: DateTime.now(),
+        contentLength: 1024,
+        varyHeaders: varyHeaders,
+      );
+
+      final json = originalMeta.toJson();
+      final deserializedMeta = MetaInfo.fromJson(json);
+
+      expect(deserializedMeta.varyHeaders, varyHeaders);
+    });
+
+    test('should handle missing varyHeaders in JSON', () {
+      final json = {
+        'url': 'https://example.com/test.jpg',
+        'createdAt': DateTime.now().millisecondsSinceEpoch,
+        'contentLength': 1024,
+      };
+      final meta = MetaInfo.fromJson(json);
+      expect(meta.varyHeaders, isNull);
+    });
   });
 }

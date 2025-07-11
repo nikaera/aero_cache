@@ -21,7 +21,7 @@ class CacheControlParser {
         final equalIndex = trimmed.indexOf('=');
         final directive = trimmed.substring(0, equalIndex).trim();
         final value = trimmed.substring(equalIndex + 1).trim();
-        
+
         // Skip empty directive names
         if (directive.isNotEmpty) {
           directives[directive] = value;
@@ -60,7 +60,7 @@ class CacheControlParser {
 
     // Parse directives to handle priorities
     final directives = parse(cacheControl);
-    
+
     // no-store takes precedence over max-age
     if (directives.containsKey('no-store')) {
       return null;
@@ -121,7 +121,7 @@ class CacheControlParser {
   static List<String> getVaryHeaders(HttpHeaders headers) {
     final varyHeader = headers.value('vary');
     if (varyHeader == null) return [];
-    
+
     return varyHeader
         .split(',')
         .map((header) => header.trim())
@@ -129,14 +129,14 @@ class CacheControlParser {
         .toList();
   }
 
-  /// Get relevant request headers for cache key calculation based on Vary 
+  /// Get relevant request headers for cache key calculation based on Vary
   /// headers
   static Map<String, String> getRelevantRequestHeaders(
     Map<String, String> requestHeaders,
     List<String> varyHeaders,
   ) {
     final relevantHeaders = <String, String>{};
-    
+
     for (final varyHeader in varyHeaders) {
       final lowerVaryHeader = varyHeader.toLowerCase();
       for (final requestHeader in requestHeaders.keys) {
@@ -146,7 +146,7 @@ class CacheControlParser {
         }
       }
     }
-    
+
     return relevantHeaders;
   }
 }

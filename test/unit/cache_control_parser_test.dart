@@ -196,11 +196,11 @@ void main() {
     test('should handle invalid directive values gracefully', () {
       const cacheControlValue = 'max-age=invalid, no-cache, stale-if-error=-1';
       final directives = CacheControlParser.parse(cacheControlValue);
-      
+
       expect(directives['max-age'], 'invalid');
       expect(directives['no-cache'], null);
       expect(directives['stale-if-error'], '-1');
-      
+
       // Methods should return null for invalid values
       final headers = _createMockHeaders({
         'cache-control': cacheControlValue,
@@ -212,11 +212,11 @@ void main() {
     test('should handle malformed directive syntax gracefully', () {
       const cacheControlValue = 'max-age=, =3600, , malformed=value=extra';
       final directives = CacheControlParser.parse(cacheControlValue);
-      
+
       expect(directives['max-age'], '');
       expect(directives.containsKey(''), false); // Empty key filtered out
       expect(directives['malformed'], 'value=extra');
-      
+
       // Should not crash and should handle gracefully
       final headers = _createMockHeaders({
         'cache-control': cacheControlValue,
@@ -228,7 +228,7 @@ void main() {
     test('should ignore empty directive names and values', () {
       const cacheControlValue = 'max-age=, =3600, , ';
       final directives = CacheControlParser.parse(cacheControlValue);
-      
+
       // Empty directive names should be filtered out
       expect(directives.containsKey(''), false);
       // max-age with empty value should still be included
@@ -249,15 +249,15 @@ void main() {
         'host': 'api.example.com',
         'x-custom-header': 'custom-value',
       };
-      
+
       final varyHeaders = ['Accept', 'Accept-Encoding', 'User-Agent'];
-      
+
       // This should identify which request headers are relevant for cache key calculation
       final relevantHeaders = CacheControlParser.getRelevantRequestHeaders(
         requestHeaders,
         varyHeaders,
       );
-      
+
       expect(relevantHeaders, {
         'accept': 'application/json',
         'accept-encoding': 'gzip, deflate',

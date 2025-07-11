@@ -15,6 +15,7 @@ class MetaInfo {
     this.staleWhileRevalidate,
     this.staleIfError,
     this.mustRevalidate = false,
+    this.varyHeaders,
   });
 
   /// Create MetaInfo from JSON data
@@ -33,6 +34,9 @@ class MetaInfo {
       staleWhileRevalidate: json['staleWhileRevalidate'] as int?,
       staleIfError: json['staleIfError'] as int?,
       mustRevalidate: json['mustRevalidate'] as bool? ?? false,
+      varyHeaders: json['varyHeaders'] != null
+          ? List<String>.from(json['varyHeaders'] as List)
+          : null,
     );
   }
 
@@ -72,6 +76,9 @@ class MetaInfo {
 
   /// Whether the cache must be revalidated when stale
   final bool mustRevalidate;
+
+  /// Vary header values from the response
+  final List<String>? varyHeaders;
 
   /// Check if the cache is stale (expired)
   bool get isStale => expiresAt != null && DateTime.now().isAfter(expiresAt!);
@@ -149,6 +156,7 @@ class MetaInfo {
       'staleWhileRevalidate': staleWhileRevalidate,
       'staleIfError': staleIfError,
       'mustRevalidate': mustRevalidate,
+      'varyHeaders': varyHeaders,
     };
   }
 
