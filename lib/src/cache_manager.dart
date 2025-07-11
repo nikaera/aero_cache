@@ -151,15 +151,6 @@ class CacheManager {
     throw AeroCacheException('Failed to $operation for $url', error);
   }
 
-  /// Safe execution wrapper for cache operations
-  Future<T?> _safeExecute<T>(Future<T> Function() operation) async {
-    try {
-      return await operation();
-    } on Exception catch (_) {
-      return null;
-    }
-  }
-
   /// Update metadata for a URL
   Future<void> updateMeta(String url, HttpHeaders headers) async {
     try {
@@ -264,7 +255,7 @@ class CacheManager {
     try {
       final dataToWrite = await _compression.compress(rawData);
       final varyHeaders = CacheControlParser.getVaryHeaders(headers);
-      
+
       debugPrint('Saving Vary-aware cache for $url');
       _logCompressionRatio(url, dataToWrite.length, rawData.length);
 

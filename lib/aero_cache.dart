@@ -63,7 +63,7 @@ class AeroCache {
     Map<String, String>? headers,
   }) async {
     try {
-      final meta = headers != null 
+      final meta = headers != null
           ? await _cacheManager.getMetaWithRequestHeaders(url, headers)
           : await _cacheManager.getMeta(url);
 
@@ -226,14 +226,14 @@ class AeroCache {
     try {
       final uri = Uri.parse(url);
       final request = await _httpClient.getUrl(uri);
-      
+
       // Add request headers if provided
       if (requestHeaders != null) {
         requestHeaders.forEach((key, value) {
           request.headers.add(key, value);
         });
       }
-      
+
       final response = await request.close();
 
       if (response.statusCode != 200) {

@@ -271,7 +271,7 @@ void main() {
 
       final varyHeaders = ['Accept', 'Accept-Encoding', 'User-Agent'];
 
-      // This should identify which request headers are relevant for cache key calculation
+      // Identify relevant request headers for cache key calculation
       final relevantHeaders = CacheControlParser.getRelevantRequestHeaders(
         requestHeaders,
         varyHeaders,

@@ -566,7 +566,7 @@ void main() {
     });
 
     test(
-      'should handle multiple cache entries for same URL with different Vary values',
+      'should cache multiple entries for same URL with Vary',
       () async {
         await cacheManager.initialize();
 

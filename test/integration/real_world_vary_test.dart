@@ -20,9 +20,9 @@ class FakePathProviderPlatform extends PathProviderPlatform {
   }
 }
 
-/// Integration test to validate Vary header implementation against 
+/// Integration test to validate Vary header implementation against
 /// real-world HTTP responses
-/// 
+///
 /// Note: These tests require real network access and are skipped
 /// in Flutter test environments where HTTP requests return 400
 void main() {
@@ -30,10 +30,11 @@ void main() {
     PathProviderPlatform.instance = FakePathProviderPlatform();
     TestWidgetsFlutterBinding.ensureInitialized();
   });
-  
-  const skipReason = 'Integration test requires real network access, '
+
+  const skipReason =
+      'Integration test requires real network access, '
       'but Flutter test environment returns HTTP 400 for all requests';
-  
+
   group('Real-world Vary header validation', () {
     late AeroCache cache;
     late HttpClient httpClient;

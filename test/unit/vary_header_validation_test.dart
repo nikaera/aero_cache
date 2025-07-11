@@ -14,9 +14,9 @@ void main() {
       final headers = _createMockHeaders({
         'vary': 'Accept-Encoding, User-Agent, Accept-Language',
       });
-      
+
       final varyHeaders = CacheControlParser.getVaryHeaders(headers);
-      
+
       expect(varyHeaders, hasLength(3));
       expect(varyHeaders, contains('Accept-Encoding'));
       expect(varyHeaders, contains('User-Agent'));
@@ -27,9 +27,9 @@ void main() {
       final headers = _createMockHeaders({
         'vary': ' Accept-Encoding ,  User-Agent  , Accept-Language ',
       });
-      
+
       final varyHeaders = CacheControlParser.getVaryHeaders(headers);
-      
+
       expect(varyHeaders, hasLength(3));
       expect(varyHeaders, contains('Accept-Encoding'));
       expect(varyHeaders, contains('User-Agent'));
@@ -38,9 +38,9 @@ void main() {
 
     test('validates Vary: * detection', () {
       final headers = _createMockHeaders({'vary': '*'});
-      
+
       final hasVaryAsterisk = CacheControlParser.hasVaryAsterisk(headers);
-      
+
       expect(hasVaryAsterisk, true);
     });
 
@@ -52,14 +52,14 @@ void main() {
         'Authorization': 'Bearer token123',
         'Content-Type': 'application/json',
       };
-      
+
       final varyHeaders = ['Accept-Encoding', 'User-Agent'];
-      
+
       final relevantHeaders = CacheControlParser.getRelevantRequestHeaders(
         requestHeaders,
         varyHeaders,
       );
-      
+
       expect(relevantHeaders, hasLength(2));
       expect(relevantHeaders['Accept-Encoding'], 'gzip, deflate');
       expect(relevantHeaders['User-Agent'], 'TestClient/1.0');
@@ -73,14 +73,14 @@ void main() {
         'USER-AGENT': 'TestClient/1.0',
         'Accept-Language': 'en-US',
       };
-      
+
       final varyHeaders = ['Accept-Encoding', 'User-Agent'];
-      
+
       final relevantHeaders = CacheControlParser.getRelevantRequestHeaders(
         requestHeaders,
         varyHeaders,
       );
-      
+
       expect(relevantHeaders, hasLength(2));
       expect(relevantHeaders['accept-encoding'], 'gzip');
       expect(relevantHeaders['USER-AGENT'], 'TestClient/1.0');
@@ -93,20 +93,20 @@ void main() {
         'User-Agent': 'TestClient/1.0',
       };
       final varyHeaders = ['Accept-Encoding', 'User-Agent'];
-      
+
       final hash1 = CacheUrlHasher.getVaryAwareUrlHash(
         url,
         requestHeaders,
         varyHeaders,
       );
-      
+
       // Same headers should produce same hash
       final hash2 = CacheUrlHasher.getVaryAwareUrlHash(
         url,
         requestHeaders,
         varyHeaders,
       );
-      
+
       expect(hash1, equals(hash2));
       expect(hash1, isNotEmpty);
       expect(hash1.length, 64); // SHA256 hex string length
@@ -123,7 +123,7 @@ void main() {
         'User-Agent': 'TestClient/1.0',
       };
       final varyHeaders = ['Accept-Encoding', 'User-Agent'];
-      
+
       final hash1 = CacheUrlHasher.getVaryAwareUrlHash(
         url,
         requestHeaders1,
@@ -134,7 +134,7 @@ void main() {
         requestHeaders2,
         varyHeaders,
       );
-      
+
       expect(hash1, isNot(equals(hash2)));
     });
 
@@ -144,11 +144,11 @@ void main() {
         'Accept-Encoding': 'gzip',
         'User-Agent': 'TestClient/1.0',
       };
-      
+
       // Different order of vary headers
       final varyHeaders1 = ['Accept-Encoding', 'User-Agent'];
       final varyHeaders2 = ['User-Agent', 'Accept-Encoding'];
-      
+
       final hash1 = CacheUrlHasher.getVaryAwareUrlHash(
         url,
         requestHeaders,
@@ -159,13 +159,13 @@ void main() {
         requestHeaders,
         varyHeaders2,
       );
-      
+
       expect(hash1, equals(hash2));
     });
 
     test('validates MetaInfo stores Vary headers correctly', () {
       final varyHeaders = ['Accept-Encoding', 'User-Agent'];
-      
+
       final metaInfo = MetaInfo(
         url: 'https://example.com/test',
         etag: 'test-etag',
@@ -174,10 +174,9 @@ void main() {
         expiresAt: DateTime.now().add(const Duration(hours: 1)),
         contentLength: 1024,
         contentType: 'application/json',
-        requiresRevalidation: false,
         varyHeaders: varyHeaders,
       );
-      
+
       expect(metaInfo.varyHeaders, isNotNull);
       expect(metaInfo.varyHeaders, hasLength(2));
       expect(metaInfo.varyHeaders, contains('Accept-Encoding'));
@@ -187,9 +186,9 @@ void main() {
     test('validates empty Vary headers handling', () {
       final headers = _createMockHeaders({});
       // No Vary header set
-      
+
       final varyHeaders = CacheControlParser.getVaryHeaders(headers);
-      
+
       expect(varyHeaders, isEmpty);
     });
 
@@ -197,14 +196,14 @@ void main() {
       final requestHeaders = <String, String>{
         'User-Agent': 'TestClient/1.0',
       };
-      
+
       final varyHeaders = ['Accept-Encoding', 'User-Agent'];
-      
+
       final relevantHeaders = CacheControlParser.getRelevantRequestHeaders(
         requestHeaders,
         varyHeaders,
       );
-      
+
       // Should only include headers that exist in request
       expect(relevantHeaders, hasLength(1));
       expect(relevantHeaders['User-Agent'], 'TestClient/1.0');
@@ -214,15 +213,15 @@ void main() {
     test('validates CacheManager with custom cache directory', () async {
       // Create temporary directory for testing
       final tempDir = Directory.systemTemp.createTempSync('aero_cache_test');
-      
+
       try {
         final cacheManager = CacheManager(
           cacheDirPath: tempDir.path,
           disableCompression: true,
         );
-        
+
         await cacheManager.initialize();
-        
+
         // Test saving with Vary headers
         const url = 'https://example.com/test';
         final data = Uint8List.fromList([1, 2, 3, 4, 5]);
@@ -230,15 +229,15 @@ void main() {
           'vary': 'Accept-Encoding',
           'cache-control': 'max-age=3600',
         });
-        
+
         await cacheManager.saveData(url, data, headers);
-        
+
         // Verify metadata contains Vary headers
         final meta = await cacheManager.getMeta(url);
         expect(meta, isNotNull);
         expect(meta!.varyHeaders, isNotNull);
         expect(meta.varyHeaders, contains('Accept-Encoding'));
-        
+
         // Test data retrieval
         final retrievedData = await cacheManager.getData(url);
         expect(retrievedData, equals(data));
