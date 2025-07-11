@@ -185,6 +185,25 @@ void main() {
       expect(CacheControlParser.getVaryHeaders(headers), ['*']);
     });
 
+    test('should detect Vary: * header as uncacheable', () {
+      final headers = _createMockHeaders({
+        'vary': '*',
+      });
+      expect(CacheControlParser.hasVaryAsterisk(headers), true);
+    });
+
+    test('should not detect regular Vary headers as asterisk', () {
+      final headers = _createMockHeaders({
+        'vary': 'Accept, User-Agent',
+      });
+      expect(CacheControlParser.hasVaryAsterisk(headers), false);
+    });
+
+    test('should return false when no Vary header present', () {
+      final headers = _createMockHeaders({});
+      expect(CacheControlParser.hasVaryAsterisk(headers), false);
+    });
+
     test('should handle directive priorities - no-store overrides max-age', () {
       final headers = _createMockHeaders({
         'cache-control': 'no-store, max-age=3600',

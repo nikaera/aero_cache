@@ -186,8 +186,9 @@ class AeroCache {
 
       final data = Uint8List.fromList(chunks.expand((x) => x).toList());
 
-      // Check if no-store directive prevents caching
-      if (!CacheControlParser.hasNoStore(response.headers)) {
+      // Check if no-store directive or Vary: * prevents caching
+      if (!CacheControlParser.hasNoStore(response.headers) &&
+          !CacheControlParser.hasVaryAsterisk(response.headers)) {
         if (requestHeaders != null) {
           await _cacheManager.saveDataWithRequestHeaders(
             url,

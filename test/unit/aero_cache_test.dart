@@ -515,6 +515,27 @@ void main() {
         expect(mockHttpClient.requestCount, 2); // No new request
       },
     );
+
+    test('should not cache responses with Vary: * header', () async {
+      await aeroCache.initialize();
+
+      const url = 'https://example.com/vary-asterisk';
+      final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+
+      mockHttpClient.setResponse(url, testData, {
+        'vary': '*',
+        'cache-control': 'max-age=3600',
+      });
+
+      final result1 = await aeroCache.get(url);
+      expect(result1, testData);
+      expect(mockHttpClient.requestCount, 1);
+
+      // Second request should not use cache due to Vary: *
+      final result2 = await aeroCache.get(url);
+      expect(result2, testData);
+      expect(mockHttpClient.requestCount, 2);
+    });
   });
 }
 

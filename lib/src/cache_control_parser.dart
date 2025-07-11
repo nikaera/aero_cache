@@ -129,6 +129,12 @@ class CacheControlParser {
         .toList();
   }
 
+  /// Check if the response has Vary: * header (uncacheable)
+  static bool hasVaryAsterisk(HttpHeaders headers) {
+    final varyHeader = headers.value('vary');
+    return varyHeader != null && varyHeader.trim() == '*';
+  }
+
   /// Get relevant request headers for cache key calculation based on Vary
   /// headers
   static Map<String, String> getRelevantRequestHeaders(
