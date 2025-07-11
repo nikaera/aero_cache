@@ -31,14 +31,16 @@ class FeatureCard extends StatelessWidget {
               Icon(icon, size: 48, color: color),
               const SizedBox(height: 12),
               Flexible(
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                child: FittedBox(
+                  fit: BoxFit.fitWidth,
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 2,
                 ),
               ),
               const SizedBox(height: 8),
