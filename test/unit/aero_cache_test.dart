@@ -468,6 +468,53 @@ void main() {
         expect(mockHttpClient.requestCount, 2);
       },
     );
+
+    test(
+      'should cache different responses for same URL with Vary header',
+      () async {
+        await aeroCache.initialize();
+
+        const url = 'https://example.com/api/content';
+        final jsonData = Uint8List.fromList([1, 2, 3]);
+        final xmlData = Uint8List.fromList([4, 5, 6]);
+
+        // First request for JSON content
+        mockHttpClient.setResponse(url, jsonData, {
+          'vary': 'Accept',
+          'cache-control': 'max-age=3600',
+          'content-type': 'application/json',
+        });
+
+        final jsonResult = await aeroCache.get(
+          url,
+          headers: {'accept': 'application/json'},
+        );
+        expect(jsonResult, jsonData);
+        expect(mockHttpClient.requestCount, 1);
+
+        // Second request for XML content (should make new request due to Vary)
+        mockHttpClient.setResponse(url, xmlData, {
+          'vary': 'Accept',
+          'cache-control': 'max-age=3600',
+          'content-type': 'application/xml',
+        });
+
+        final xmlResult = await aeroCache.get(
+          url,
+          headers: {'accept': 'application/xml'},
+        );
+        expect(xmlResult, xmlData);
+        expect(mockHttpClient.requestCount, 2);
+
+        // Third request for JSON content should use cache
+        final cachedJsonResult = await aeroCache.get(
+          url,
+          headers: {'accept': 'application/json'},
+        );
+        expect(cachedJsonResult, jsonData);
+        expect(mockHttpClient.requestCount, 2); // No new request
+      },
+    );
   });
 }
 

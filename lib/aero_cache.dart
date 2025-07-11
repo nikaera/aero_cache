@@ -60,34 +60,41 @@ class AeroCache {
     int? minFresh,
     bool onlyIfCached = false,
     bool noStore = false,
+    Map<String, String>? headers,
   }) async {
     try {
-      final meta = await _cacheManager.getMeta(url);
+      final meta = headers != null 
+          ? await _cacheManager.getMetaWithRequestHeaders(url, headers)
+          : await _cacheManager.getMeta(url);
 
       // Handle only-if-cached directive
       if (onlyIfCached) {
         if (meta == null) {
           throw AeroCacheException('No cached response available for $url');
         }
-        return await _cacheManager.getData(url);
+        return headers != null
+            ? await _cacheManager.getDataWithRequestHeaders(url, headers)
+            : await _cacheManager.getData(url);
       }
 
       if (meta != null && !noCache) {
         // Check for max-age request directive
         if (maxAge != null && !meta.isOlderThan(maxAge)) {
           // キャッシュがmaxAgeより古い場合は再検証（サーバーへリクエスト）
-          return await _downloadAndCache(url, meta, onProgress);
+          return await _downloadAndCache(url, meta, onProgress, headers);
         }
 
         // min-fresh requirement check
         if (minFresh != null && !meta.hasMinimumFreshness(minFresh)) {
           // Not fresh enough, must fetch new data
-          return await _downloadAndCache(url, meta, onProgress);
+          return await _downloadAndCache(url, meta, onProgress, headers);
         }
 
         // max-stale 許容判定
         if (maxStale != null && meta.isWithinStalePeriod(maxStale)) {
-          return await _cacheManager.getData(url);
+          return headers != null
+              ? await _cacheManager.getDataWithRequestHeaders(url, headers)
+              : await _cacheManager.getData(url);
         }
 
         // Return stale data and update cache in the background (SWR)
@@ -95,23 +102,25 @@ class AeroCache {
           final staleData = await _cacheManager.getStaleData(url);
           if (staleData != null) {
             // Update cache in the background
-            unawaited(_downloadAndCache(url, meta, onProgress));
+            unawaited(_downloadAndCache(url, meta, onProgress, headers));
             return staleData;
           }
         }
 
         // Check if we can use cached data
         if (!meta.isStale && !meta.requiresRevalidation) {
-          return await _cacheManager.getData(url);
+          return headers != null
+              ? await _cacheManager.getDataWithRequestHeaders(url, headers)
+              : await _cacheManager.getData(url);
         }
       }
 
       // Handle no-store directive - download only without caching
       if (noStore) {
-        return await _downloadOnly(url, onProgress);
+        return await _downloadOnly(url, onProgress, headers);
       }
 
-      return await _downloadAndCache(url, meta, onProgress);
+      return await _downloadAndCache(url, meta, onProgress, headers);
     } catch (e) {
       if (e is AeroCacheException) {
         rethrow;
@@ -124,10 +133,18 @@ class AeroCache {
     String url,
     MetaInfo? meta,
     ProgressCallback? onProgress,
+    Map<String, String>? requestHeaders,
   ) async {
     try {
       final uri = Uri.parse(url);
       final request = await _httpClient.getUrl(uri);
+
+      // Add request headers if provided
+      if (requestHeaders != null) {
+        requestHeaders.forEach((key, value) {
+          request.headers.add(key, value);
+        });
+      }
 
       if (meta != null && meta.isStale) {
         if (meta.etag != null) {
@@ -171,7 +188,16 @@ class AeroCache {
 
       // Check if no-store directive prevents caching
       if (!CacheControlParser.hasNoStore(response.headers)) {
-        await _cacheManager.saveData(url, data, response.headers);
+        if (requestHeaders != null) {
+          await _cacheManager.saveDataWithRequestHeaders(
+            url,
+            data,
+            response.headers,
+            requestHeaders,
+          );
+        } else {
+          await _cacheManager.saveData(url, data, response.headers);
+        }
       }
 
       return data;
@@ -194,10 +220,19 @@ class AeroCache {
   Future<Uint8List> _downloadOnly(
     String url,
     ProgressCallback? onProgress,
+    Map<String, String>? requestHeaders,
   ) async {
     try {
       final uri = Uri.parse(url);
       final request = await _httpClient.getUrl(uri);
+      
+      // Add request headers if provided
+      if (requestHeaders != null) {
+        requestHeaders.forEach((key, value) {
+          request.headers.add(key, value);
+        });
+      }
+      
       final response = await request.close();
 
       if (response.statusCode != 200) {
