@@ -28,7 +28,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  aero_cache: ^0.0.1
+  aero_cache: ^1.0.0
 ```
 
 Then run:
