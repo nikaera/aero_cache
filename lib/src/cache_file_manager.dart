@@ -13,8 +13,8 @@ import 'package:aero_cache/src/storage/metadata_service.dart';
 class CacheFileManager {
   /// Create a new CacheFileManager instance
   CacheFileManager(this.cacheDirectory)
-    : _fileStorage = FileStorageService(cacheDirectory),
-      _keyService = const CacheKeyService() {
+      : _fileStorage = FileStorageService(cacheDirectory),
+        _keyService = const CacheKeyService() {
     _metadataService = MetadataService(_fileStorage, _keyService);
     _dataService = CacheDataService(
       _fileStorage,

@@ -171,7 +171,7 @@ class MockHttpClient implements HttpClient {
   @override
   set authenticateProxy(
     Future<bool> Function(String host, int port, String scheme, String? realm)?
-    f,
+        f,
   ) {}
 
   @override
@@ -196,8 +196,7 @@ class MockHttpClient implements HttpClient {
       Uri url,
       String? proxyHost,
       int? proxyPort,
-    )?
-    f,
+    )? f,
   ) {}
 
   @override
@@ -493,9 +492,8 @@ class TestSetupHelper {
   }
 
   static Future<CacheManager> createCacheManager([String? path]) async {
-    final tempDir = path != null
-        ? Directory(path)
-        : await createTempDirectory();
+    final tempDir =
+        path != null ? Directory(path) : await createTempDirectory();
     return CacheManager(
       cacheDirPath: tempDir.path,
       disableCompression: true,

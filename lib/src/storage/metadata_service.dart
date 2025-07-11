@@ -134,8 +134,7 @@ class MetadataService {
       etag: headers.value('etag') ?? oldMeta.etag,
       lastModified: headers.value('last-modified') ?? oldMeta.lastModified,
       createdAt: oldMeta.createdAt,
-      expiresAt:
-          CacheExpirationCalculator.calculateExpiresAt(
+      expiresAt: CacheExpirationCalculator.calculateExpiresAt(
             headers,
             defaultCacheDuration,
           ) ??
@@ -145,7 +144,7 @@ class MetadataService {
       requiresRevalidation: CacheControlParser.hasNoCache(headers),
       staleWhileRevalidate:
           CacheControlParser.getStaleWhileRevalidate(headers) ??
-          oldMeta.staleWhileRevalidate,
+              oldMeta.staleWhileRevalidate,
       staleIfError:
           CacheControlParser.getStaleIfError(headers) ?? oldMeta.staleIfError,
       mustRevalidate: CacheControlParser.hasMustRevalidate(headers),
