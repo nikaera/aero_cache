@@ -1,3 +1,10 @@
+## 1.0.0+1
+
+- Improved documentation and clarified package description in pubspec.yaml
+- Updated dependency versions for better compatibility
+- Added dependabot configuration for automated dependency updates
+- Minor CI and documentation improvements
+
 ## 1.0.0
 
 ### Initial Release 🎉
