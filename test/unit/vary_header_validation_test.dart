@@ -1,17 +1,17 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:aero_cache/src/cache_control_parser.dart';
-import 'package:aero_cache/src/cache_manager.dart';
 import 'package:aero_cache/src/cache_url_hasher.dart';
 import 'package:aero_cache/src/meta_info.dart';
 import 'package:test/test.dart';
+
+import '../test_utils.dart';
 
 /// Unit test to validate Vary header implementation logic
 void main() {
   group('Vary header validation', () {
     test('validates Vary header parsing from HTTP headers', () {
-      final headers = _createMockHeaders({
+      final headers = createMockHeaders({
         'vary': 'Accept-Encoding, User-Agent, Accept-Language',
       });
 
@@ -24,7 +24,7 @@ void main() {
     });
 
     test('validates Vary header parsing with whitespace', () {
-      final headers = _createMockHeaders({
+      final headers = createMockHeaders({
         'vary': ' Accept-Encoding ,  User-Agent  , Accept-Language ',
       });
 
@@ -37,7 +37,7 @@ void main() {
     });
 
     test('validates Vary: * detection', () {
-      final headers = _createMockHeaders({'vary': '*'});
+      final headers = createMockHeaders({'vary': '*'});
 
       final hasVaryAsterisk = CacheControlParser.hasVaryAsterisk(headers);
 
@@ -184,7 +184,7 @@ void main() {
     });
 
     test('validates empty Vary headers handling', () {
-      final headers = _createMockHeaders({});
+      final headers = createMockHeaders({});
       // No Vary header set
 
       final varyHeaders = CacheControlParser.getVaryHeaders(headers);
@@ -211,13 +211,11 @@ void main() {
     });
 
     test('validates CacheManager with custom cache directory', () async {
-      // Create temporary directory for testing
-      final tempDir = Directory.systemTemp.createTempSync('aero_cache_test');
+      final tempDir = await TestSetupHelper.createTempDirectory();
 
       try {
-        final cacheManager = CacheManager(
-          cacheDirPath: tempDir.path,
-          disableCompression: true,
+        final cacheManager = await TestSetupHelper.createCacheManager(
+          tempDir.path,
         );
 
         await cacheManager.initialize();
@@ -225,7 +223,7 @@ void main() {
         // Test saving with Vary headers
         const url = 'https://example.com/test';
         final data = Uint8List.fromList([1, 2, 3, 4, 5]);
-        final headers = _createMockHeaders({
+        final headers = createMockHeaders({
           'vary': 'Accept-Encoding',
           'cache-control': 'max-age=3600',
         });
@@ -247,116 +245,4 @@ void main() {
       }
     });
   });
-}
-
-HttpHeaders _createMockHeaders(Map<String, String> headers) {
-  final request = MockHttpClientRequest();
-  headers.forEach(request.headers.add);
-  return request.headers;
-}
-
-class MockHttpClientRequest {
-  final HttpHeaders headers = _MockHttpHeaders();
-}
-
-class _MockHttpHeaders implements HttpHeaders {
-  final Map<String, List<String>> _headers = {};
-
-  @override
-  void add(String name, Object value, {bool preserveHeaderCase = false}) {
-    _headers.putIfAbsent(name.toLowerCase(), () => []).add(value.toString());
-  }
-
-  @override
-  String? value(String name) {
-    final values = _headers[name.toLowerCase()];
-    return values?.isNotEmpty ?? false ? values!.first : null;
-  }
-
-  @override
-  List<String>? operator [](String name) {
-    return _headers[name.toLowerCase()];
-  }
-
-  @override
-  void clear() => _headers.clear();
-
-  @override
-  bool get chunkedTransferEncoding => false;
-
-  @override
-  set chunkedTransferEncoding(bool value) {}
-
-  @override
-  int get contentLength => -1;
-
-  @override
-  set contentLength(int value) {}
-
-  @override
-  ContentType? get contentType => null;
-
-  @override
-  set contentType(ContentType? value) {}
-
-  @override
-  DateTime? get date => null;
-
-  @override
-  set date(DateTime? value) {}
-
-  @override
-  DateTime? get expires => null;
-
-  @override
-  set expires(DateTime? value) {}
-
-  @override
-  void forEach(void Function(String name, List<String> values) action) {
-    _headers.forEach(action);
-  }
-
-  @override
-  String? get host => null;
-
-  @override
-  set host(String? value) {}
-
-  @override
-  DateTime? get ifModifiedSince => null;
-
-  @override
-  set ifModifiedSince(DateTime? value) {}
-
-  @override
-  bool get persistentConnection => false;
-
-  @override
-  set persistentConnection(bool value) {}
-
-  @override
-  int? get port => null;
-
-  @override
-  set port(int? value) {}
-
-  @override
-  void remove(String name, Object value) {
-    _headers[name.toLowerCase()]?.remove(value.toString());
-  }
-
-  @override
-  void removeAll(String name) {
-    _headers.remove(name.toLowerCase());
-  }
-
-  @override
-  void set(String name, Object value, {bool preserveHeaderCase = false}) {
-    _headers[name.toLowerCase()] = [value.toString()];
-  }
-
-  @override
-  void noFolding(String name) {
-    // no-op for test mock
-  }
 }

@@ -6,17 +6,16 @@ import 'package:aero_cache/src/cache_manager.dart';
 import 'package:aero_cache/src/exceptions.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../test_utils.dart';
+
 void main() {
   group('CacheManager', () {
     late CacheManager cacheManager;
     late Directory tempDir;
 
     setUp(() async {
-      tempDir = await Directory.systemTemp.createTemp('aero_cache_test');
-      cacheManager = CacheManager(
-        cacheDirPath: tempDir.path,
-        disableCompression: true,
-      );
+      tempDir = await TestSetupHelper.createTempDirectory();
+      cacheManager = await TestSetupHelper.createCacheManager(tempDir.path);
     });
 
     tearDown(() async {
@@ -40,7 +39,7 @@ void main() {
       await cacheManager.initialize();
       const url = 'https://example.com/test.jpg';
       final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
-      final headers = _createMockHeaders({
+      final headers = createMockHeaders({
         'etag': '"abc123"',
         'last-modified': 'Wed, 09 Jul 2025 12:00:00 GMT',
         'cache-control': 'max-age=3600',
@@ -59,7 +58,7 @@ void main() {
       await cacheManager.initialize();
       const url = 'https://example.com/test.jpg';
       final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
-      final headers = _createMockHeaders({});
+      final headers = createMockHeaders({});
       await cacheManager.saveData(url, testData, headers);
       await Future<void>.delayed(const Duration(milliseconds: 100));
       final retrievedData = await cacheManager.getData(url);
@@ -79,7 +78,7 @@ void main() {
       await cacheManager.initialize();
       const url = 'https://example.com/test.jpg';
       final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
-      final headers = _createMockHeaders({
+      final headers = createMockHeaders({
         'cache-control': 'max-age=3600',
       });
       await cacheManager.saveData(url, testData, headers);
@@ -95,7 +94,7 @@ void main() {
       const url = 'https://example.com/test.jpg';
       final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
       final futureDate = DateTime.now().add(const Duration(hours: 2));
-      final headers = _createMockHeaders({
+      final headers = createMockHeaders({
         'expires': HttpDate.format(futureDate),
       });
       await cacheManager.saveData(url, testData, headers);
@@ -111,7 +110,7 @@ void main() {
       await cacheManager.initialize();
       const url = 'https://example.com/test.jpg';
       final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
-      final headers = _createMockHeaders({});
+      final headers = createMockHeaders({});
       await cacheManager.saveData(url, testData, headers);
       await Future<void>.delayed(const Duration(milliseconds: 100));
       final meta = await cacheManager.getMeta(url);
@@ -125,7 +124,7 @@ void main() {
       const url1 = 'https://example.com/test1.jpg';
       const url2 = 'https://example.com/test2.jpg';
       final testData = Uint8List.fromList([1, 2, 3]);
-      final headers = _createMockHeaders({});
+      final headers = createMockHeaders({});
       await cacheManager.saveData(url1, testData, headers);
       await cacheManager.saveData(url2, testData, headers);
       await Future<void>.delayed(const Duration(milliseconds: 100));
@@ -142,11 +141,11 @@ void main() {
       const url2 = 'https://example.com/valid.jpg';
       final testData = Uint8List.fromList([1, 2, 3]);
       // 期限切れ（過去日時）
-      final expiredHeaders = _createMockHeaders({
+      final expiredHeaders = createMockHeaders({
         'cache-control': 'max-age=0',
       });
       // 有効期限（未来日時）
-      final validHeaders = _createMockHeaders({
+      final validHeaders = createMockHeaders({
         'cache-control': 'max-age=3600',
       });
       await cacheManager.saveData(url1, testData, expiredHeaders);
@@ -174,7 +173,7 @@ void main() {
       await cacheManager.initialize();
       const url = 'https://example.com/no-cache-test.jpg';
       final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
-      final headers = _createMockHeaders({
+      final headers = createMockHeaders({
         'cache-control': 'no-cache',
       });
       await cacheManager.saveData(url, testData, headers);
@@ -186,7 +185,7 @@ void main() {
 
     test('should not cache data with no-store directive', () async {
       await cacheManager.initialize();
-      final headers = _createMockHeaders({
+      final headers = createMockHeaders({
         'cache-control': 'no-store',
       });
       final noStore = CacheControlParser.hasNoStore(headers);
@@ -197,7 +196,7 @@ void main() {
       'should allow caching when no-store directive is not present',
       () async {
         await cacheManager.initialize();
-        final headers = _createMockHeaders({
+        final headers = createMockHeaders({
           'cache-control': 'max-age=3600',
         });
         final noStore = CacheControlParser.hasNoStore(headers);
@@ -209,7 +208,7 @@ void main() {
       'should allow caching when no cache-control header is present',
       () async {
         await cacheManager.initialize();
-        final headers = _createMockHeaders({});
+        final headers = createMockHeaders({});
         final noStore = CacheControlParser.hasNoStore(headers);
         expect(noStore, false);
       },
@@ -217,7 +216,7 @@ void main() {
 
     test('should identify must-revalidate directive', () async {
       await cacheManager.initialize();
-      final headers = _createMockHeaders({
+      final headers = createMockHeaders({
         'cache-control': 'must-revalidate',
       });
       final mustRevalidate = CacheControlParser.hasMustRevalidate(headers);
@@ -226,7 +225,7 @@ void main() {
 
     test('should return false for non-must-revalidate responses', () async {
       await cacheManager.initialize();
-      final headers = _createMockHeaders({
+      final headers = createMockHeaders({
         'cache-control': 'max-age=3600',
       });
       final mustRevalidate = CacheControlParser.hasMustRevalidate(headers);
@@ -237,7 +236,7 @@ void main() {
       'should return false when no cache-control for must-revalidate check',
       () async {
         await cacheManager.initialize();
-        final headers = _createMockHeaders({});
+        final headers = createMockHeaders({});
         final mustRevalidate = CacheControlParser.hasMustRevalidate(headers);
         expect(mustRevalidate, false);
       },
@@ -245,7 +244,7 @@ void main() {
 
     test('should identify stale-while-revalidate directive', () async {
       await cacheManager.initialize();
-      final headers = _createMockHeaders({
+      final headers = createMockHeaders({
         'cache-control': 'stale-while-revalidate=300',
       });
       final hasStaleWhileRevalidate =
@@ -257,7 +256,7 @@ void main() {
       'should return false for non-stale-while-revalidate responses',
       () async {
         await cacheManager.initialize();
-        final headers = _createMockHeaders({
+        final headers = createMockHeaders({
           'cache-control': 'max-age=3600',
         });
         final hasStaleWhileRevalidate =
@@ -268,7 +267,7 @@ void main() {
 
     test('should extract stale-while-revalidate value', () async {
       await cacheManager.initialize();
-      final headers = _createMockHeaders({
+      final headers = createMockHeaders({
         'cache-control': 'max-age=3600, stale-while-revalidate=300',
       });
       final staleWhileRevalidateValue =
@@ -280,7 +279,7 @@ void main() {
       'should return null when stale-while-revalidate is not present',
       () async {
         await cacheManager.initialize();
-        final headers = _createMockHeaders({
+        final headers = createMockHeaders({
           'cache-control': 'max-age=3600',
         });
         final staleWhileRevalidateValue =
@@ -293,7 +292,7 @@ void main() {
       await cacheManager.initialize();
       const url = 'https://example.com/test.jpg';
       final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
-      final headers = _createMockHeaders({
+      final headers = createMockHeaders({
         'cache-control': 'max-age=3600, stale-while-revalidate=300',
       });
       await cacheManager.saveData(url, testData, headers);
@@ -311,7 +310,7 @@ void main() {
         final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
         // Create an entry that will be stale but within
         // stale-while-revalidate window
-        final headers = _createMockHeaders({
+        final headers = createMockHeaders({
           'cache-control': 'max-age=0, stale-while-revalidate=300',
         });
         await cacheManager.saveData(url, testData, headers);
@@ -329,7 +328,7 @@ void main() {
         await cacheManager.initialize();
         const url = 'https://example.com/test.jpg';
         final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
-        final headers = _createMockHeaders({
+        final headers = createMockHeaders({
           'cache-control': 'max-age=0, stale-while-revalidate=300',
         });
         await cacheManager.saveData(url, testData, headers);
@@ -347,7 +346,7 @@ void main() {
         await cacheManager.initialize();
         const url = 'https://example.com/test.jpg';
         final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
-        final headers = _createMockHeaders({
+        final headers = createMockHeaders({
           'cache-control': 'max-age=0, stale-while-revalidate=300',
         });
         await cacheManager.saveData(url, testData, headers);
@@ -363,7 +362,7 @@ void main() {
       await cacheManager.initialize();
       const url = 'https://example.com/test.jpg';
       final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
-      final headers = _createMockHeaders({
+      final headers = createMockHeaders({
         'cache-control': 'max-age=3600, stale-if-error=600',
       });
       await cacheManager.saveData(url, testData, headers);
@@ -380,7 +379,7 @@ void main() {
         const url = 'https://example.com/test.jpg';
         final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
         // Create an entry that will be stale but within stale-if-error window
-        final headers = _createMockHeaders({
+        final headers = createMockHeaders({
           'cache-control': 'max-age=0, stale-if-error=600',
         });
         await cacheManager.saveData(url, testData, headers);
@@ -398,7 +397,7 @@ void main() {
         await cacheManager.initialize();
         const url = 'https://example.com/test.jpg';
         final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
-        final headers = _createMockHeaders({
+        final headers = createMockHeaders({
           'cache-control': 'max-age=0, stale-if-error=600',
         });
         await cacheManager.saveData(url, testData, headers);
@@ -416,7 +415,7 @@ void main() {
         await cacheManager.initialize();
         const url = 'https://example.com/test.jpg';
         final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
-        final headers = _createMockHeaders({
+        final headers = createMockHeaders({
           'cache-control': 'max-age=0, stale-if-error=600',
         });
         await cacheManager.saveData(url, testData, headers);
@@ -434,7 +433,7 @@ void main() {
 
       const url = 'https://example.com/vary-test.jpg';
       final data = Uint8List.fromList([1, 2, 3, 4, 5]);
-      final headers = _createMockHeaders({
+      final headers = createMockHeaders({
         'content-type': 'image/jpeg',
         'vary': 'Accept, Accept-Encoding',
       });
@@ -467,7 +466,7 @@ void main() {
 
         const url = 'https://example.com/vary-test.jpg';
         final data = Uint8List.fromList([1, 2, 3, 4, 5]);
-        final headers = _createMockHeaders({
+        final headers = createMockHeaders({
           'content-type': 'image/jpeg',
           'vary': 'Accept, Accept-Encoding',
         });
@@ -496,7 +495,7 @@ void main() {
 
         const url = 'https://example.com/api/content';
         final data = Uint8List.fromList([10, 20, 30]);
-        final headers = _createMockHeaders({
+        final headers = createMockHeaders({
           'content-type': 'application/json',
           'vary': 'Accept, User-Agent',
           'cache-control': 'max-age=3600',
@@ -535,7 +534,7 @@ void main() {
 
       const url = 'https://example.com/api/content';
       final data = Uint8List.fromList([10, 20, 30]);
-      final headers = _createMockHeaders({
+      final headers = createMockHeaders({
         'content-type': 'application/json',
         'vary': 'Accept, User-Agent',
         'cache-control': 'max-age=3600',
@@ -574,7 +573,7 @@ void main() {
         final jsonData = Uint8List.fromList([1, 2, 3]);
         final xmlData = Uint8List.fromList([4, 5, 6]);
 
-        final headers = _createMockHeaders({
+        final headers = createMockHeaders({
           'vary': 'Accept',
           'cache-control': 'max-age=3600',
         });
@@ -609,96 +608,4 @@ void main() {
       },
     );
   });
-}
-
-HttpHeaders _createMockHeaders(Map<String, String> headers) {
-  final request = MockHttpClientRequest();
-  headers.forEach(request.headers.add);
-  return request.headers;
-}
-
-class MockHttpClientRequest {
-  final HttpHeaders headers = _MockHttpHeaders();
-}
-
-class _MockHttpHeaders implements HttpHeaders {
-  final Map<String, List<String>> _headers = {};
-  @override
-  void add(String name, Object value, {bool preserveHeaderCase = false}) {
-    _headers.putIfAbsent(name.toLowerCase(), () => []).add(value.toString());
-  }
-
-  @override
-  String? value(String name) {
-    final values = _headers[name.toLowerCase()];
-    return values?.isNotEmpty ?? false ? values!.first : null;
-  }
-
-  @override
-  List<String>? operator [](String name) {
-    return _headers[name.toLowerCase()];
-  }
-
-  @override
-  void clear() => _headers.clear();
-  @override
-  bool get chunkedTransferEncoding => false;
-  @override
-  set chunkedTransferEncoding(bool value) {}
-  @override
-  int get contentLength => -1;
-  @override
-  set contentLength(int value) {}
-  @override
-  ContentType? get contentType => null;
-  @override
-  set contentType(ContentType? value) {}
-  @override
-  DateTime? get date => null;
-  @override
-  set date(DateTime? value) {}
-  @override
-  DateTime? get expires => null;
-  @override
-  set expires(DateTime? value) {}
-  @override
-  void forEach(void Function(String name, List<String> values) action) {
-    _headers.forEach(action);
-  }
-
-  @override
-  String? get host => null;
-  @override
-  set host(String? value) {}
-  @override
-  DateTime? get ifModifiedSince => null;
-  @override
-  set ifModifiedSince(DateTime? value) {}
-  @override
-  bool get persistentConnection => false;
-  @override
-  set persistentConnection(bool value) {}
-  @override
-  int? get port => null;
-  @override
-  set port(int? value) {}
-  @override
-  void remove(String name, Object value) {
-    _headers[name.toLowerCase()]?.remove(value.toString());
-  }
-
-  @override
-  void removeAll(String name) {
-    _headers.remove(name.toLowerCase());
-  }
-
-  @override
-  void set(String name, Object value, {bool preserveHeaderCase = false}) {
-    _headers[name.toLowerCase()] = [value.toString()];
-  }
-
-  @override
-  void noFolding(String name) {
-    // no-op for test mock
-  }
 }
