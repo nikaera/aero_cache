@@ -119,8 +119,6 @@ class CacheManager {
   ) async {
     try {
       final dataToWrite = await _compression.compress(rawData);
-      _logCompressionRatio(url, dataToWrite.length, rawData.length);
-
       final varyHeaders = CacheControlParser.getVaryHeaders(headers);
       final metaInfo = _createMetaInfo(
         url,
@@ -136,14 +134,6 @@ class CacheManager {
     } on Exception catch (e) {
       return _handleError('save cache data', url, e);
     }
-  }
-
-  /// Log compression ratio for debugging
-  void _logCompressionRatio(String url, int compressedSize, int originalSize) {
-    debugPrint(
-      'Saving cache for $url, '
-      'compressionRatio: ${compressedSize / originalSize}',
-    );
   }
 
   /// Handle errors consistently with proper exception wrapping
@@ -255,9 +245,6 @@ class CacheManager {
     try {
       final dataToWrite = await _compression.compress(rawData);
       final varyHeaders = CacheControlParser.getVaryHeaders(headers);
-
-      debugPrint('Saving Vary-aware cache for $url');
-      _logCompressionRatio(url, dataToWrite.length, rawData.length);
 
       final metaInfo = _createMetaInfo(
         url,

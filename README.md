@@ -13,6 +13,9 @@ A high-performance caching library for Dart/Flutter with zstd compression and ET
 - **ETag Support**: Automatic cache revalidation using ETag headers
 - **Last-Modified Support**: Fallback cache validation using Last-Modified headers
 - **Vary Header Support**: Intelligent cache key generation based on Vary header specifications
+- **Cache Control Directives**: Support for no-cache, no-store, must-revalidate, max-age, max-stale, min-fresh, only-if-cached, stale-while-revalidate, and stale-if-error
+- **Background Revalidation**: Stale-while-revalidate support for serving stale content while updating cache
+- **Error Resilience**: Stale-if-error support for serving cached content during network failures
 - **Progress Tracking**: Real-time download progress callbacks
 - **Automatic Cleanup**: Built-in expired cache cleanup
 - **Flexible Configuration**: Customizable cache directory and compression settings
@@ -67,7 +70,9 @@ void main() async {
   // Create AeroCache with custom configuration
   final cache = AeroCache(
     disableCompression: false,  // Enable zstd compression
+    compressionLevel: 6,        // Custom compression level (1-22)
     cacheDirPath: '/custom/cache/path',  // Custom cache directory
+    defaultCacheDuration: const Duration(hours: 24),  // Custom cache duration
   );
   
   await cache.initialize();
@@ -87,6 +92,8 @@ void main() async {
     print('ETag: ${metaInfo.etag}');
     print('Last Modified: ${metaInfo.lastModified}');
     print('Is Stale: ${metaInfo.isStale}');
+    print('Expires At: ${metaInfo.expiresAt}');
+    print('Content Type: ${metaInfo.contentType}');
   }
   
   // Clear expired cache
@@ -103,38 +110,81 @@ void main() async {
 
 ```dart
 import 'package:aero_cache/aero_cache.dart';
-import 'dart:io';
 
 void main() async {
   final cache = AeroCache();
   await cache.initialize();
   
-  // Create custom HTTP client with specific headers
-  final client = HttpClient();
-  final customCache = AeroCache(httpClient: client);
-  await customCache.initialize();
-  
   // First request with English accept-language
-  client.userAgent = 'MyApp/1.0';
-  final request1 = await client.getUrl(Uri.parse('https://api.example.com/content'));
-  request1.headers.set('Accept-Language', 'en-US');
-  request1.headers.set('Accept-Encoding', 'gzip');
-  
-  // AeroCache will automatically handle Vary header from response
-  // and create cache key based on specified headers
-  final data1 = await customCache.get('https://api.example.com/content');
+  final data1 = await cache.get(
+    'https://api.example.com/content',
+    headers: {
+      'Accept-Language': 'en-US',
+      'User-Agent': 'MyApp/1.0',
+      'Accept-Encoding': 'gzip',
+    },
+  );
   
   // Second request with different accept-language
-  final request2 = await client.getUrl(Uri.parse('https://api.example.com/content'));
-  request2.headers.set('Accept-Language', 'ja-JP');
-  request2.headers.set('Accept-Encoding', 'gzip');
+  // This will create a separate cache entry if the server's response
+  // includes "Vary: Accept-Language"
+  final data2 = await cache.get(
+    'https://api.example.com/content',
+    headers: {
+      'Accept-Language': 'ja-JP',
+      'User-Agent': 'MyApp/1.0',
+      'Accept-Encoding': 'gzip',
+    },
+  );
   
-  // This will create a separate cache entry due to different Accept-Language
-  // if the server's response includes "Vary: Accept-Language"
-  final data2 = await customCache.get('https://api.example.com/content');
+  cache.dispose();
+}
+```
+
+### Cache Control Directives
+
+```dart
+import 'package:aero_cache/aero_cache.dart';
+
+void main() async {
+  final cache = AeroCache();
+  await cache.initialize();
   
-  client.close();
-  customCache.dispose();
+  // Force bypass cache and download fresh data
+  final freshData = await cache.get(
+    'https://api.example.com/data',
+    noCache: true,
+  );
+  
+  // Only use cached data, fail if not available
+  try {
+    final cachedData = await cache.get(
+      'https://api.example.com/data',
+      onlyIfCached: true,
+    );
+  } catch (e) {
+    print('No cached data available');
+  }
+  
+  // Accept stale data up to 3600 seconds old
+  final staleData = await cache.get(
+    'https://api.example.com/data',
+    maxStale: 3600,
+  );
+  
+  // Require data to be fresh for at least 300 seconds
+  final freshRequiredData = await cache.get(
+    'https://api.example.com/data',
+    minFresh: 300,
+  );
+  
+  // Download without caching (no-store equivalent)
+  final temporaryData = await cache.get(
+    'https://api.example.com/data',
+    noStore: true,
+  );
+  
+  cache.dispose();
 }
 ```
 
@@ -157,6 +207,7 @@ class _ImageWidgetState extends State<ImageWidget> {
   final AeroCache _cache = AeroCache();
   Uint8List? _imageData;
   bool _isLoading = true;
+  double _progress = 0.0;
   
   @override
   void initState() {
@@ -167,7 +218,14 @@ class _ImageWidgetState extends State<ImageWidget> {
   Future<void> _loadImage() async {
     try {
       await _cache.initialize();
-      final data = await _cache.get(widget.imageUrl);
+      final data = await _cache.get(
+        widget.imageUrl,
+        onProgress: (received, total) {
+          setState(() {
+            _progress = received / total;
+          });
+        },
+      );
       setState(() {
         _imageData = data;
         _isLoading = false;
@@ -183,7 +241,14 @@ class _ImageWidgetState extends State<ImageWidget> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const CircularProgressIndicator();
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 8),
+          Text('${(_progress * 100).toInt()}%'),
+        ],
+      );
     }
     
     if (_imageData != null) {
@@ -211,18 +276,22 @@ class _ImageWidgetState extends State<ImageWidget> {
 AeroCache({
   HttpClient? httpClient,
   bool disableCompression = false,
+  int compressionLevel = 3,
+  Duration defaultCacheDuration = const Duration(days: 5),
   String? cacheDirPath,
 })
 ```
 
 - `httpClient`: Optional custom HTTP client
 - `disableCompression`: Disable zstd compression (default: false)
+- `compressionLevel`: Zstd compression level 1-22 (default: 3)
+- `defaultCacheDuration`: Default cache duration (default: 5 days)
 - `cacheDirPath`: Custom cache directory path
 
 #### Methods
 
 - `Future<void> initialize()`: Initialize the cache manager
-- `Future<Uint8List> get(String url, {ProgressCallback? onProgress})`: Get data from cache or download
+- `Future<Uint8List> get(String url, {ProgressCallback? onProgress, bool noCache, int? maxAge, int? maxStale, int? minFresh, bool onlyIfCached, bool noStore, Map<String, String>? headers})`: Get data from cache or download with advanced cache control
 - `Future<void> clearAllCache()`: Clear all cached data
 - `Future<void> clearExpiredCache()`: Clear expired cache entries
 - `Future<MetaInfo?> metaInfo(String url)`: Get metadata for a URL
@@ -234,8 +303,16 @@ Contains metadata information about cached entries:
 
 - `String? etag`: ETag header value
 - `String? lastModified`: Last-Modified header value
+- `String? contentType`: Content-Type header value
+- `DateTime createdAt`: Cache creation time
 - `DateTime expiresAt`: Cache expiration time
+- `int contentLength`: Content length in bytes
 - `bool isStale`: Whether the cache entry is stale
+- `bool requiresRevalidation`: Whether cache requires revalidation
+- `bool mustRevalidate`: Whether cache must be revalidated
+- `Duration? staleWhileRevalidate`: Stale-while-revalidate duration
+- `Duration? staleIfError`: Stale-if-error duration
+- `List<String>? varyHeaders`: Vary header specifications
 
 ### Exceptions
 
