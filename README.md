@@ -2,7 +2,7 @@
 
 <img src="https://github.com/user-attachments/assets/63710118-2c6e-4402-92ad-d7eb0ea27208" width="80%"/>
 
-[![CI](https://github.com/nikaera/aero_cache/actions/workflows/ci.yaml/badge.svg)](https://github.com/nikaera/aero_cache/actions/workflows/ci.yaml)
+[![CI](https://github.com/nikaera/aero_cache/actions/workflows/project-ci.yaml/badge.svg)](https://github.com/nikaera/aero_cache/actions/workflows/project-ci.yaml)
 [![pub package](https://img.shields.io/pub/v/aero_cache.svg)](https://pub.dev/packages/aero_cache)
 [![style: very good analysis](https://img.shields.io/badge/style-very_good_analysis-B22C89.svg)](https://pub.dev/packages/very_good_analysis)
 
