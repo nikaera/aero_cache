@@ -23,11 +23,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Install Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: "microsoft"
-          java-version: "21"
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
