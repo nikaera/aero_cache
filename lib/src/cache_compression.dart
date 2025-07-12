@@ -38,7 +38,7 @@ class CacheCompression {
       }
       return await _zstandard.compress(rawData, compressionLevel) ?? rawData;
     } catch (e) {
-      throw AeroCacheException('Failed to compress data', e);
+      throw CompressionException('Failed to compress data', e);
     }
   }
 
@@ -52,7 +52,7 @@ class CacheCompression {
           await _zstandard.decompress(compressedData) ?? compressedData;
       return Uint8List.fromList(rawData);
     } catch (e) {
-      throw AeroCacheException('Failed to decompress data', e);
+      throw CompressionException('Failed to decompress data', e);
     }
   }
 }

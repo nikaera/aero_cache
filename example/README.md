@@ -150,7 +150,7 @@ We welcome contributions! This example app is a great way to:
 
 ## 📄 License
 
-This example application is licensed under the MIT License - see the [LICENSE](../LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](../LICENSE) file for details.
 
 ---
 

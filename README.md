@@ -8,21 +8,21 @@
 
 A high-performance HTTP caching library for Dart/Flutter with zstd compression, ETag/Last-Modified revalidation, and full Cache-Control directive support.
 
-## Features
+## Features ✨🚀
 
-- **High Performance**: Efficient caching with zstd compression for optimal storage
-- **ETag Support**: Automatic cache revalidation using ETag headers
-- **Last-Modified Support**: Fallback cache validation using Last-Modified headers
-- **Vary Header Support**: Intelligent cache key generation based on Vary header specifications
-- **Cache Control Directives**: Support for no-cache, no-store, must-revalidate, max-age, max-stale, min-fresh, only-if-cached, stale-while-revalidate, and stale-if-error
-- **Background Revalidation**: Stale-while-revalidate support for serving stale content while updating cache
-- **Error Resilience**: Stale-if-error support for serving cached content during network failures
-- **Progress Tracking**: Real-time download progress callbacks
-- **Automatic Cleanup**: Built-in expired cache cleanup
-- **Flexible Configuration**: Customizable cache directory and compression settings
-- **Exception Handling**: Comprehensive error handling with custom exceptions
+- ⚡️ **High Performance**: Efficient caching with zstd compression for optimal storage
+- 🏷️ **ETag Support**: Automatic cache revalidation using ETag headers
+- 🕒 **Last-Modified Support**: Fallback cache validation using Last-Modified headers
+- 🧩 **Vary Header Support**: Intelligent cache key generation based on Vary header specifications
+- 🛡️ **Cache Control Directives**: Support for no-cache, no-store, must-revalidate, max-age, max-stale, min-fresh, only-if-cached, stale-while-revalidate, and stale-if-error
+- 🔄 **Background Revalidation**: Stale-while-revalidate support for serving stale content while updating cache
+- 🛠️ **Error Resilience**: Stale-if-error support for serving cached content during network failures
+- 📈 **Progress Tracking**: Real-time download progress callbacks
+- 🧹 **Automatic Cleanup**: Built-in expired cache cleanup
+- ⚙️ **Flexible Configuration**: Customizable cache directory and compression settings
+- 🚨 **Exception Handling**: Comprehensive error handling with custom exceptions
 
-## Installation
+## Installation 🛠️
 
 Add this to your package's `pubspec.yaml` file:
 
@@ -37,9 +37,9 @@ Then run:
 flutter pub get
 ```
 
-## Usage
+## Usage 📦
 
-### Basic Usage
+### Basic Usage 🏁
 
 ```dart
 import 'package:aero_cache/aero_cache.dart';
@@ -62,7 +62,7 @@ void main() async {
 }
 ```
 
-### Advanced Usage
+### Advanced Usage ⚙️
 
 ```dart
 import 'package:aero_cache/aero_cache.dart';
@@ -107,7 +107,7 @@ void main() async {
 }
 ```
 
-### Vary Header Handling
+### Vary Header Handling 🧩
 
 ```dart
 import 'package:aero_cache/aero_cache.dart';
@@ -142,7 +142,7 @@ void main() async {
 }
 ```
 
-### Cache Control Directives
+### Cache Control Directives 🛡️
 
 ```dart
 import 'package:aero_cache/aero_cache.dart';
@@ -189,7 +189,7 @@ void main() async {
 }
 ```
 
-### Flutter Integration
+### Flutter Integration 🐦
 
 ```dart
 import 'package:flutter/material.dart';
@@ -267,59 +267,9 @@ class _ImageWidgetState extends State<ImageWidget> {
 }
 ```
 
-## API Reference
+[API Reference 📚](https://nikaera.com/aero_cache/)
 
-### AeroCache
-
-#### Constructor
-
-```dart
-AeroCache({
-  HttpClient? httpClient,
-  bool disableCompression = false,
-  int compressionLevel = 3,
-  Duration defaultCacheDuration = const Duration(days: 5),
-  String? cacheDirPath,
-})
-```
-
-- `httpClient`: Optional custom HTTP client
-- `disableCompression`: Disable zstd compression (default: false)
-- `compressionLevel`: Zstd compression level 1-22 (default: 3)
-- `defaultCacheDuration`: Default cache duration (default: 5 days)
-- `cacheDirPath`: Custom cache directory path
-
-#### Methods
-
-- `Future<void> initialize()`: Initialize the cache manager
-- `Future<Uint8List> get(String url, {ProgressCallback? onProgress, bool noCache, int? maxAge, int? maxStale, int? minFresh, bool onlyIfCached, bool noStore, Map<String, String>? headers})`: Get data from cache or download with advanced cache control
-- `Future<void> clearAllCache()`: Clear all cached data
-- `Future<void> clearExpiredCache()`: Clear expired cache entries
-- `Future<MetaInfo?> metaInfo(String url)`: Get metadata for a URL
-- `void dispose()`: Dispose of resources
-
-### MetaInfo
-
-Contains metadata information about cached entries:
-
-- `String? etag`: ETag header value
-- `String? lastModified`: Last-Modified header value
-- `String? contentType`: Content-Type header value
-- `DateTime createdAt`: Cache creation time
-- `DateTime expiresAt`: Cache expiration time
-- `int contentLength`: Content length in bytes
-- `bool isStale`: Whether the cache entry is stale
-- `bool requiresRevalidation`: Whether cache requires revalidation
-- `bool mustRevalidate`: Whether cache must be revalidated
-- `Duration? staleWhileRevalidate`: Stale-while-revalidate duration
-- `Duration? staleIfError`: Stale-if-error duration
-- `List<String>? varyHeaders`: Vary header specifications
-
-### Exceptions
-
-- `AeroCacheException`: Base exception class for cache-related errors
-
-## Performance
+## Performance ⚡️
 
 AeroCache uses zstd compression by default, which provides:
 - Fast compression/decompression speeds
@@ -328,7 +278,7 @@ AeroCache uses zstd compression by default, which provides:
 
 Benchmarks show significant storage savings compared to uncompressed caching, especially for text-based content like JSON and HTML.
 
-## Vary Header Support
+## Vary Header Support 🧩
 
 AeroCache intelligently handles the `Vary` header to ensure correct cache behavior when responses depend on request headers. When a server includes a `Vary` header in its response, AeroCache automatically:
 
@@ -339,7 +289,7 @@ AeroCache intelligently handles the `Vary` header to ensure correct cache behavi
 
 This ensures that cached responses are served only when appropriate, preventing issues like serving compressed content to clients that don't support compression.
 
-## Contributing
+## Contributing 🤝
 
 We welcome contributions to AeroCache! Please follow the GitHub Flow process:
 
@@ -372,7 +322,7 @@ We welcome contributions to AeroCache! Please follow the GitHub Flow process:
    - Reference any related issues
    - Screenshots if applicable
 
-### Development Setup
+### Development Setup 🧑‍💻
 
 1. Clone the repository:
    ```bash
@@ -396,14 +346,21 @@ We welcome contributions to AeroCache! Please follow the GitHub Flow process:
    flutter run
    ```
 
-### Code Style
+### Code Style 🎨
 
 - Follow the official [Dart style guide](https://dart.dev/guides/language/effective-dart/style)
 - Use `very_good_analysis` linting rules
 - Write comprehensive tests for new features
 - Add documentation for public APIs
 
-### Reporting Issues
+## Support 💬
+
+For questions and support:
+- Check the [example](example/) directory for usage examples
+- Open an issue on GitHub for bugs or feature requests
+- Review the API documentation
+
+### Reporting Issues 🐞
 
 When reporting issues, please include:
 - Flutter/Dart version
@@ -412,17 +369,10 @@ When reporting issues, please include:
 - Expected vs actual behavior
 - Code samples if applicable
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Changelog
+## Changelog 📝
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and changes.
 
-## Support
+## License 📄
 
-For questions and support:
-- Check the [example](example/) directory for usage examples
-- Open an issue on GitHub for bugs or feature requests
-- Review the API documentation
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
