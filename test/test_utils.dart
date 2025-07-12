@@ -26,6 +26,11 @@ class MockHttpClient implements HttpClient {
     _responses[url] = MockHttpClientResponse(data, 200, headers);
   }
 
+  void setResponseWithDelay(
+      String url, Uint8List data, Map<String, String> headers, int delayMs) {
+    _responses[url] = MockHttpClientResponse(data, 200, headers, delayMs);
+  }
+
   void setNotModifiedResponse(String url) {
     _responses[url] = MockHttpClientResponse(Uint8List(0), 304, {});
   }
@@ -302,10 +307,12 @@ class MockHttpClientRequest implements HttpClientRequest {
 
 class MockHttpClientResponse extends Stream<List<int>>
     implements HttpClientResponse {
-  MockHttpClientResponse(this.data, this._statusCode, this._headers);
+  MockHttpClientResponse(this.data, this._statusCode, this._headers,
+      [this._delayMs = 0]);
   final Uint8List? data;
   final int _statusCode;
   final Map<String, String> _headers;
+  final int _delayMs;
 
   @override
   StreamSubscription<List<int>> listen(
@@ -325,7 +332,15 @@ class MockHttpClientResponse extends Stream<List<int>>
       );
     }
 
-    return Stream.value(data!.toList()).listen(
+    var stream = Stream.value(data!.toList());
+    if (_delayMs > 0) {
+      stream = stream.asyncMap((chunk) async {
+        await Future<void>.delayed(Duration(milliseconds: _delayMs));
+        return chunk;
+      });
+    }
+
+    return stream.listen(
       onData,
       onError: onError,
       onDone: onDone,

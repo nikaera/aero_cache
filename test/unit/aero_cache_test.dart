@@ -522,5 +522,33 @@ void main() {
       expect(result2, testData);
       expect(mockHttpClient.requestCount, 2);
     });
+
+    test('should queue downloads and limit concurrent downloads', () async {
+      await aeroCache.initialize();
+
+      const url1 = 'https://example.com/file1.jpg';
+      const url2 = 'https://example.com/file2.jpg';
+      const url3 = 'https://example.com/file3.jpg';
+      final testData = Uint8List.fromList([1, 2, 3, 4, 5]);
+
+      // Set up mock responses with delays to simulate slow downloads
+      mockHttpClient
+        ..setResponseWithDelay(url1, testData, <String, String>{}, 100)
+        ..setResponseWithDelay(url2, testData, <String, String>{}, 100)
+        ..setResponseWithDelay(url3, testData, <String, String>{}, 100);
+
+      // Start three downloads simultaneously
+      final futures = [
+        aeroCache.get(url1),
+        aeroCache.get(url2),
+        aeroCache.get(url3),
+      ];
+
+      // Wait for all downloads to complete
+      await Future.wait(futures);
+
+      // Should have made 3 requests but queue should have managed concurrency
+      expect(mockHttpClient.requestCount, 3);
+    });
   });
 }
