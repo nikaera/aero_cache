@@ -43,10 +43,14 @@ class NetworkException extends AeroCacheException {
   @override
   String toString() {
     const prefix = 'NetworkException';
+    final details = <String>[
+      if (url != null) 'URL: $url',
+      if (statusCode != null) 'Status Code: $statusCode',
+    ].join(', ');
     if (originalException != null) {
-      return '$prefix: $message (Original: $originalException)';
+      return '$prefix: $message (Original: $originalException${details.isNotEmpty ? ', $details' : ''})';
     }
-    return '$prefix: $message';
+    return '$prefix: $message${details.isNotEmpty ? ' ($details)' : ''}';
   }
 }
 
