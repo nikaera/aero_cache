@@ -50,7 +50,58 @@ class AeroCache {
     await _cacheManager.clearExpiredCache();
   }
 
-  /// Get data from cache or download if not available/stale
+  /// Retrieves data from cache or downloads if not available/stale.
+  ///
+  /// This method implements HTTP caching semantics including:
+  /// - Cache-Control directive handling
+  /// - ETag/Last-Modified revalidation
+  /// - Stale-while-revalidate support
+  /// - Background cache updates
+  ///
+  /// ## Parameters
+  /// - [url]: The URL to fetch data from
+  /// - [onProgress]: Optional callback for download progress updates
+  /// - [noCache]: If true, bypasses cache and always fetches fresh data
+  /// - [maxAge]: Maximum age in seconds for cached content
+  /// - [maxStale]: Maximum staleness in seconds that's acceptable
+  /// - [minFresh]: Minimum freshness in seconds required
+  /// - [onlyIfCached]: If true, only returns cached data (throws if not cached)
+  /// - [noStore]: If true, downloads without caching the response
+  /// - [headers]: Additional request headers to include
+  ///
+  /// ## Examples
+  /// ```dart
+  /// // Basic usage
+  /// final data = await cache.get('https://api.example.com/data');
+  ///
+  /// // With cache control
+  /// final data = await cache.get(
+  ///   'https://api.example.com/data',
+  ///   maxAge: 3600, // Cache for 1 hour max
+  ///   onProgress: (received, total) => print('$received/$total'),
+  /// );
+  ///
+  /// // Only use cache, don't fetch if not available
+  /// try {
+  ///   final data = await cache.get(
+  ///     'https://api.example.com/data',
+  ///     onlyIfCached: true,
+  ///   );
+  /// } catch (e) {
+  ///   print('No cached data available');
+  /// }
+  ///
+  /// // Download without caching
+  /// final data = await cache.get(
+  ///   'https://api.example.com/data',
+  ///   noStore: true,
+  /// );
+  /// ```
+  ///
+  /// ## Throws
+  /// - [NetworkException] when network requests fail
+  /// - [AeroCacheException] when cache operations fail
+  /// - [ValidationException] when parameters are invalid
   Future<Uint8List> get(
     String url, {
     ProgressCallback? onProgress,
@@ -80,7 +131,7 @@ class AeroCache {
       if (meta != null && !noCache) {
         // Check for max-age request directive
         if (maxAge != null && !meta.isOlderThan(maxAge)) {
-          // キャッシュがmaxAgeより古い場合は再検証（サーバーへリクエスト）
+          // Cache is older than maxAge, revalidate with server
           return await _downloadAndCache(url, meta, onProgress, headers);
         }
 
@@ -90,7 +141,7 @@ class AeroCache {
           return await _downloadAndCache(url, meta, onProgress, headers);
         }
 
-        // max-stale 許容判定
+        // Check if stale data is acceptable within max-stale tolerance
         if (maxStale != null && meta.isWithinStalePeriod(maxStale)) {
           return headers != null
               ? await _cacheManager.getDataWithRequestHeaders(url, headers)
@@ -168,7 +219,11 @@ class AeroCache {
         if (staleData != null) {
           return staleData;
         }
-        throw AeroCacheException('HTTP ${response.statusCode} for $url');
+        throw NetworkException.withDetails(
+          'HTTP error',
+          url,
+          response.statusCode,
+        );
       }
 
       final contentLength = response.contentLength;
@@ -237,7 +292,11 @@ class AeroCache {
       final response = await request.close();
 
       if (response.statusCode != 200) {
-        throw AeroCacheException('HTTP ${response.statusCode} for $url');
+        throw NetworkException.withDetails(
+          'HTTP error',
+          url,
+          response.statusCode,
+        );
       }
 
       final contentLength = response.contentLength;

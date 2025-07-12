@@ -64,7 +64,7 @@ class CacheManager {
         await _cacheDirectory.create(recursive: true);
       }
     } catch (e) {
-      throw AeroCacheException('Failed to initialize cache directory', e);
+      throw InitializationException('Failed to initialize cache directory', e);
     }
   }
 
