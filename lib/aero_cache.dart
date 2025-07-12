@@ -372,7 +372,9 @@ class AeroCache {
         item.meta,
         item.onProgress,
         item.headers,
-      ).then((_) {}).catchError((_) {}).whenComplete(() {
+      ).then((_) {}).catchError((error) {
+        print('Download failed for URL ${item.url}: $error');
+      }).whenComplete(() {
         _activeDownloads.remove(downloadFuture);
         // Process next item in queue if available
         if (_downloadQueue.isNotEmpty) {
