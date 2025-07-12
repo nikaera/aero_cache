@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -372,8 +373,8 @@ class AeroCache {
         item.meta,
         item.onProgress,
         item.headers,
-      ).then((_) {}).catchError((error) {
-        print('Download failed for URL ${item.url}: $error');
+      ).then((_) {}).catchError((Object error) {
+        log('Download failed for URL ${item.url}: $error');
       }).whenComplete(() {
         _activeDownloads.remove(downloadFuture);
         // Process next item in queue if available
