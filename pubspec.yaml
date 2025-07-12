@@ -1,6 +1,6 @@
 name: aero_cache
 description: "A high-performance HTTP caching library for Dart/Flutter with zstd compression, ETag/Last-Modified revalidation, and full Cache-Control directive support for mobile applications."
-version: 1.0.0+1
+version: 1.0.1
 homepage: https://github.com/nikaera/aero_cache
 repository: https://github.com/nikaera/aero_cache
 documentation: https://nikaera.com/aero_cache

@@ -1,3 +1,25 @@
+## 1.0.1
+
+### Features
+
+- **Download Queue with Concurrency Limits**: Implemented queue-based download management with configurable concurrency limits to improve performance and prevent overwhelming network resources
+- **Enhanced Exception Handling**: Added Flutter & Dart development best practices documentation and improved cache management exception handling
+
+### Improvements
+
+- **Better Error Logging**: Replaced print statements with proper log calls for download error handling in AeroCache
+- **Documentation Updates**: Fixed documentation URL in pubspec.yaml and updated example README license statement
+- **Code Quality**: Improved code formatting and readability across the codebase
+- **CI/CD Enhancements**: Added automated API documentation deployment and optimized workflow configurations
+- **Package Metadata**: Cleaned up pubspec.yaml by removing irrelevant topics for better package discoverability
+
+### Technical Changes
+
+- Enhanced test utilities with better mock setup and configuration
+- Improved cache management with better error handling
+- Updated CI workflows to remove unnecessary Java installation steps
+- Added comprehensive development best practices documentation
+
 ## 1.0.0+1
 
 - Improved documentation and clarified package description in pubspec.yaml
