@@ -334,9 +334,9 @@ class MockHttpClientResponse extends Stream<List<int>>
 
     var stream = Stream.value(data!.toList());
     if (_delayMs > 0) {
-      stream = stream.asyncMap((data) async {
+      stream = stream.asyncMap((chunk) async {
         await Future<void>.delayed(Duration(milliseconds: _delayMs));
-        return data;
+        return chunk;
       });
     }
 
