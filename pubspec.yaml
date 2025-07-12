@@ -3,7 +3,7 @@ description: "A high-performance HTTP caching library for Dart/Flutter with zstd
 version: 1.0.0+1
 homepage: https://github.com/nikaera/aero_cache
 repository: https://github.com/nikaera/aero_cache
-documentation: https://github.com/nikaera/aero_cache#readme
+documentation: https://nikaera.com/aero_cache
 issue_tracker: https://github.com/nikaera/aero_cache/issues
 
 funding:
