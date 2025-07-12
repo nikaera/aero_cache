@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -12,6 +13,15 @@ export 'src/meta_info.dart';
 
 /// Callback function for progress updates during download
 typedef ProgressCallback = void Function(int received, int total);
+
+/// Download queue item for managing background downloads
+class _DownloadQueueItem {
+  _DownloadQueueItem(this.url, this.meta, this.onProgress, this.headers);
+  final String url;
+  final MetaInfo? meta;
+  final ProgressCallback? onProgress;
+  final Map<String, String>? headers;
+}
 
 /// High-performance cache library for Dart/Flutter with zstd compression
 class AeroCache {
@@ -43,6 +53,15 @@ class AeroCache {
 
   /// HTTP client for network requests
   final HttpClient _httpClient;
+
+  /// Download queue for managing background downloads
+  final Queue<_DownloadQueueItem> _downloadQueue = Queue<_DownloadQueueItem>();
+
+  /// Currently active download futures
+  final Set<Future<void>> _activeDownloads = <Future<void>>{};
+
+  /// Maximum number of concurrent downloads
+  static const int _maxConcurrentDownloads = 5;
 
   /// Initialize the cache manager and clear expired cache
   Future<void> initialize() async {
@@ -152,8 +171,8 @@ class AeroCache {
         if (await _cacheManager.needsBackgroundRevalidation(url)) {
           final staleData = await _cacheManager.getStaleData(url);
           if (staleData != null) {
-            // Update cache in the background
-            unawaited(_downloadAndCache(url, meta, onProgress, headers));
+            // Update cache in the background using download queue
+            _queueDownload(url, meta, onProgress, headers);
             return staleData;
           }
         }
@@ -329,6 +348,41 @@ class AeroCache {
 
   /// Get metadata information for a URL
   Future<MetaInfo?> metaInfo(String url) => _cacheManager.getMeta(url);
+
+  /// Queue a download for background processing
+  void _queueDownload(
+    String url,
+    MetaInfo? meta,
+    ProgressCallback? onProgress,
+    Map<String, String>? headers,
+  ) {
+    _downloadQueue.add(_DownloadQueueItem(url, meta, onProgress, headers));
+    _processDownloadQueue();
+  }
+
+  /// Process the download queue with concurrency limits
+  void _processDownloadQueue() {
+    while (_downloadQueue.isNotEmpty &&
+        _activeDownloads.length < _maxConcurrentDownloads) {
+      final item = _downloadQueue.removeFirst();
+      late Future<void> downloadFuture;
+
+      downloadFuture = _downloadAndCache(
+        item.url,
+        item.meta,
+        item.onProgress,
+        item.headers,
+      ).then((_) {}).catchError((_) {}).whenComplete(() {
+        _activeDownloads.remove(downloadFuture);
+        // Process next item in queue if available
+        if (_downloadQueue.isNotEmpty) {
+          _processDownloadQueue();
+        }
+      });
+
+      _activeDownloads.add(downloadFuture);
+    }
+  }
 
   /// Dispose of resources
   void dispose() {
