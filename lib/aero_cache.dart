@@ -131,7 +131,7 @@ class AeroCache {
       if (meta != null && !noCache) {
         // Check for max-age request directive
         if (maxAge != null && !meta.isOlderThan(maxAge)) {
-          // Cache is older than maxAge, revalidate with server
+          // Cache is not older than maxAge, revalidate with server
           return await _downloadAndCache(url, meta, onProgress, headers);
         }
 
